@@ -1,11 +1,11 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "agentless/catalog/executor/version"
+require "ace/version"
 
 Gem::Specification.new do |spec|
   spec.name          = "agentless-catalog-executor"
-  spec.version       = Agentless::Catalog::Executor::VERSION
+  spec.version       = ACE::VERSION
   spec.authors       = ["David Schmitt"]
   spec.email         = ["david.schmitt@puppet.com"]
 
