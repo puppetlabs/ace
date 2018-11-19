@@ -9,7 +9,7 @@ module ACE
     def run_task(taskname)
       {
         message: "executed #{taskname} from #{@environment}",
-        status: :success,
+        status: :success
       }
     end
   end

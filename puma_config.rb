@@ -11,7 +11,7 @@ require 'bolt/logger'
 
 Bolt::Logger.initialize_logging
 
-config_path = ENV['ACE_CONF'] || '/etc/puppetlabs/ace/conf.d/ace.conf'
+# config_path = ENV['ACE_CONF'] || '/etc/puppetlabs/ace/conf.d/ace.conf'
 
 # config = ACE::Config.new
 # config.load_file_config(config_path)
@@ -39,7 +39,7 @@ Logging.logger[:root].add_appenders Logging.appenders.stderr(
 
 # threads 0, config.concurrency
 
-impl = ACE::TransportApp.new #(config)
+impl = ACE::TransportApp.new # (config)
 # unless config.whitelist.nil?
 #   impl = ACE::ACL.new(impl, config.whitelist)
 # end
