@@ -6,10 +6,12 @@ module ACE
       @environment = environment
     end
 
-    def run_task(taskname)
+    def run_task(_targets, _task, _arguments, _options = {})
       {
-        message: "executed #{taskname} from #{@environment}",
-        status: :success
+        status: 'success',
+        result: {
+          _output: "executed #{taskname} from #{@environment}"
+        }
       }
     end
   end

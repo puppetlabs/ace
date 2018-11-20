@@ -2,18 +2,35 @@
 
 require 'sinatra'
 require 'ace/executor'
+require 'bolt/target'
 
 module ACE
   class TransportApp < Sinatra::Base
+    def initialize(config = nil)
+      @config = config
+      @executor = ACE::Executor.new('production')
+
+      super(nil)
+    end
+
+    get "/" do
+      200
+    end
+
     # run this with "curl -X POST http://0.0.0.0:9292/run_task -d '{}'"
     post '/run_task' do
       content_type :json
 
       body = JSON.parse(request.body.read)
 
-      @executor ||= ACE::Executor.new('production')
+      target = [Bolt::Target.new(body['target']['hostname'], body['target'])]
 
-      result = @executor.run_task(body["taskname"])
+      # originally this was a Bolt::Task::PuppetServer; simplified here for hacking
+      task = Bolt::Task.new(body['task'])
+
+      parameters = body['parameters'] || {}
+
+      result = @executor.run_task(target, task, parameters)
 
       # error = validate_schema(@schemas["ssh-run_task"], body)
       # return [400, error.to_json] unless error.nil?
