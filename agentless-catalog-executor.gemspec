@@ -1,5 +1,6 @@
+# frozen_string_literal: true
 
-lib = File.expand_path("../lib", __FILE__)
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "ace/version"
 
@@ -9,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["David Schmitt"]
   spec.email         = ["david.schmitt@puppet.com"]
 
-  spec.summary       = %q{ACE lets you run remote tasks and catalogs using puppet and bolt.}
+  spec.summary       = 'ACE lets you run remote tasks and catalogs using puppet and bolt.'
   spec.homepage      = "https://github.com/puppetlabs/agentless-catalog-executor"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
@@ -30,6 +31,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "sinatra", ">= 2.0.4"
 
   spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "rack-test", "~> 1.0"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "rubocop", "~> 0.50"
 end

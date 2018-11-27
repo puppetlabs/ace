@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "ace/version"
 
 module ACE
