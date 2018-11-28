@@ -24,6 +24,14 @@ namespace :spec do
   end
 end
 
+#### LICENSE_FINDER ####
+desc 'Check for unapproved licenses in dependencies'
+task(:license_finder) do
+  unless system('license_finder --decisions-file=.dependency_decisions.yml')
+    raise(StandardError, 'Unapproved license(s) found on dependencies')
+  end
+end
+
 #### CHANGELOG ####
 begin
   require 'github_changelog_generator/task'
