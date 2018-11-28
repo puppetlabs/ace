@@ -10,7 +10,6 @@ end
 
 task default: %i[rubocop spec]
 
-
 #### RSPEC ####
 require 'rspec/core/rake_task'
 
