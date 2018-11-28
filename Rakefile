@@ -2,6 +2,7 @@
 
 require "bundler/gem_tasks"
 require 'rubocop/rake_task'
+require 'ace/version'
 
 RuboCop::RakeTask.new(:rubocop) do |t|
   t.options = ['--display-cop-names']
@@ -20,5 +21,24 @@ namespace :spec do
   task :coverage do
     ENV['COVERAGE'] = 'yes'
     Rake::Task['spec'].execute
+  end
+end
+
+#### CHANGELOG ####
+begin
+  require 'github_changelog_generator/task'
+  GitHubChangelogGenerator::RakeTask.new :changelog do |config|
+    require 'puppet/resource_api/version'
+    config.future_release = "v#{ACE::VERSION}"
+    config.header = "# Changelog\n\n" \
+      "All significant changes to this repo will be summarized in this file.\n"
+    # config.include_labels = %w[enhancement bug]
+    config.user = 'puppetlabs'
+    config.project = 'ace'
+  end
+rescue LoadError
+  desc 'Install github_changelog_generator to get access to automatic changelog generation'
+  task :changelog do
+    raise 'Install github_changelog_generator to get access to automatic changelog generation'
   end
 end
