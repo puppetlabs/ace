@@ -82,4 +82,11 @@ RSpec.describe ACE::TransportApp do
     expect(result).to include('status' => 'success')
     expect(result['result']['_output']).to match(/got passed the message: Hello!/)
   end
+
+  it 'throws an ace/schema_error if the request is invalid' do
+    post '/run_task', JSON.generate({}), 'CONTENT_TYPE' => 'text/json'
+
+    expect(last_response.body).to match(%r{ace\/schema-error})
+    expect(last_response.status).to eq(400)
+  end
 end
