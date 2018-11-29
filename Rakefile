@@ -8,7 +8,7 @@ RuboCop::RakeTask.new(:rubocop) do |t|
   t.options = ['--display-cop-names']
 end
 
-task default: %i[rubocop spec]
+task default: %i[rubocop spec license_finder]
 
 #### RSPEC ####
 require 'rspec/core/rake_task'
