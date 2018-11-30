@@ -1,0 +1,8 @@
+version: "3"
+services:
+  ace:
+    build: .
+    image: puppet/ace:0.1.0
+    container_name: ace_default
+    ports:
+      - "44633:44633"
