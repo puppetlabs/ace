@@ -23,13 +23,12 @@ RSpec.describe ACE::TransportApp do
     expect(last_response.status).to eq(200)
   end
 
-  let(:target) {
+  let(:connection_info) {
     {
-      'host': 'hostname',
-      'user': 'user',
-      'password': 'password',
-      'port': 22,
-      'host-key-check': 'false'
+      'remote-transport': 'something',
+      'hostname': 'hostname',
+      'username': 'user',
+      'password': 'password'
     }
   }
   let(:echo_task) {
@@ -50,13 +49,7 @@ RSpec.describe ACE::TransportApp do
   let(:body) {
     {
       'task': echo_task,
-      'target': {
-        'hostname': target[:host],
-        'user': target[:user],
-        'password': target[:password],
-        'port': target[:port],
-        'host-key-check': false
-      },
+      'connection-info': connection_info,
       'parameters': { "message": "Hello!" }
     }
   }
@@ -88,5 +81,14 @@ RSpec.describe ACE::TransportApp do
 
     expect(last_response.body).to match(%r{ace\/schema-error})
     expect(last_response.status).to eq(400)
+  end
+
+  describe '/check' do
+    it 'calls the correct method' do
+      post '/check', {}, 'CONTENT_TYPE' => 'text/json'
+
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to eq('OK')
+    end
   end
 end

@@ -15,7 +15,7 @@ module ACE
       @executor = ACE::Executor.new('production')
 
       @schemas = {
-        "ssh-run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ssh-run_task.json')))
+        "ssh-run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json')))
       }
       shared_schema = JSON::Schema.new(JSON.parse(File.read(File.join(__dir__, 'schemas', 'task.json'))),
                                        Addressable::URI.parse("file:task"))
@@ -37,7 +37,11 @@ module ACE
       200
     end
 
-    # run this with "curl -X POST http://0.0.0.0:9292/run_task -d '{}'"
+    post "/check" do
+      [200, 'OK']
+    end
+
+    # run this with "curl -X POST http://0.0.0.0:44633/run_task -d '{}'"
     post '/run_task' do
       content_type :json
 
@@ -45,7 +49,10 @@ module ACE
       error = validate_schema(@schemas["ssh-run_task"], body)
       return [400, error.to_json] unless error.nil?
 
-      target = [Bolt::Target.new(body['target']['hostname'], body['target'])]
+      # grab the transport connection_info
+      connection_info = body['connection-info'] # may contain sensitive data
+
+      target = [Bolt::Target.new(connection_info['hostname'], connection_info)]
 
       # originally this was a Bolt::Task::PuppetServer; simplified here for hacking
       task = Bolt::Task.new(body['task'])
@@ -53,21 +60,6 @@ module ACE
       parameters = body['parameters'] || {}
 
       result = @executor.run_task(target, task, parameters)
-
-      # error = validate_schema(@schemas["ssh-run_task"], body)
-      # return [400, error.to_json] unless error.nil?
-
-      # opts = body['target']
-      # if opts['private-key-content']
-      #   opts['private-key'] = { 'key-data' => opts['private-key-content'] }
-      #   opts.delete('private-key-content')
-      # end
-
-      # target = [Bolt::Target.new(body['target']['hostname'], opts)]
-
-      # task = Bolt::Task::PuppetServer.new(body['task'], @file_cache)
-
-      # parameters = body['parameters'] || {}
 
       # # Since this will only be on one node we can just return the first result
       # results = @executor.run_task(target, task, parameters)
