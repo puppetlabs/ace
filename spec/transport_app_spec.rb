@@ -25,8 +25,8 @@ RSpec.describe ACE::TransportApp do
 
   let(:connection_info) {
     {
-      'remote-transport': 'something',
-      'hostname': 'hostname',
+      'remote-transport': 'panos',
+      'address': 'hostname',
       'username': 'user',
       'password': 'password'
     }
@@ -49,31 +49,29 @@ RSpec.describe ACE::TransportApp do
   let(:body) {
     {
       'task': echo_task,
-      'connection-info': connection_info,
+      'target': connection_info,
       'parameters': { "message": "Hello!" }
     }
   }
 
   it 'runs an echo task' do
     expect(executor).to receive(:run_task)
-      .with([instance_of(Bolt::Target)],
+      .with(connection_info,
             instance_of(Bolt::Task),
             "message" => "Hello!") do |target, task, _params|
-              expect(target.size).to eq 1
-              expect(target.first).to have_attributes(host: 'hostname')
-              expect(task).to have_attributes(name: 'sample::echo')
-              { "status" => "success", "result" => { "_output" => 'got passed the message: Hello!' } }
-            end
+      expect(target).to be_a Hash
+      expect(task).to have_attributes(name: 'sample::echo')
+      [200, { "status" => "success", "result" => { "output" => 'got passed the message: Hello!' } }]
+    end
 
     post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
 
-    # expect string to be empty and show the string if it's not, since rack/test
     expect(last_response.errors).to match(/\A\Z/)
     expect(last_response).to be_ok
     expect(last_response.status).to eq(200)
     result = JSON.parse(last_response.body)
     expect(result).to include('status' => 'success')
-    expect(result['result']['_output']).to match(/got passed the message: Hello!/)
+    expect(result['result']['output']).to match(/got passed the message: Hello!/)
   end
 
   it 'throws an ace/schema_error if the request is invalid' do

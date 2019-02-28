@@ -15,7 +15,7 @@ module ACE
       @executor = ACE::Executor.new('production')
 
       @schemas = {
-        "ssh-run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json')))
+        "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json')))
       }
       shared_schema = JSON::Schema.new(JSON.parse(File.read(File.join(__dir__, 'schemas', 'task.json'))),
                                        Addressable::URI.parse("file:task"))
@@ -46,25 +46,20 @@ module ACE
       content_type :json
 
       body = JSON.parse(request.body.read)
-      error = validate_schema(@schemas["ssh-run_task"], body)
+      error = validate_schema(@schemas["run_task"], body)
       return [400, error.to_json] unless error.nil?
 
       # grab the transport connection_info
-      connection_info = body['connection-info'] # may contain sensitive data
-
-      target = [Bolt::Target.new(connection_info['hostname'], connection_info)]
+      connection_info = Hash[body['target'].map { |k, v| [k.to_sym, v] }] # may contain sensitive data
 
       # originally this was a Bolt::Task::PuppetServer; simplified here for hacking
       task = Bolt::Task.new(body['task'])
 
       parameters = body['parameters'] || {}
 
-      result = @executor.run_task(target, task, parameters)
+      result = @executor.run_task(connection_info, task, parameters)
 
-      # # Since this will only be on one node we can just return the first result
-      # results = @executor.run_task(target, task, parameters)
-      # result = scrub_stack_trace(results.first.status_hash)
-      [200, result.to_json]
+      [result.first, result.last.to_json]
     end
   end
 end
