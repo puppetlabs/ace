@@ -109,3 +109,10 @@
     :why: standard license
     :versions: []
     :when: 2018-11-28 11:49:22.614641000 Z
+- - :license
+  - windows_error
+  - BSD 3-Clause
+  - :who: da-ar
+    :why: https://github.com/rapid7/windows_error/blob/master/LICENSE.txt
+    :versions: [0.1.2]
+    :when: 2019-02-28 15:56:41.045616000 Z

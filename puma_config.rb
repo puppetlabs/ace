@@ -20,7 +20,7 @@ Bolt::Logger.initialize_logging
 
 Logging.logger[:root].add_appenders Logging.appenders.stderr(
   'console',
-  layout: Bolt::Logger.default_layout,
+  layout: Bolt::Logger.default_layout
   # level: config.loglevel
 )
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ACE run_task request",
+  "description": "POST /run_task request schema for ACE",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "object",
+      "description": "Contains the Transport schema to connect to the remote target",
+      "properties": {
+        "remote-transport": {
+          "type": "string",
+          "description": "The name of the transport being used"
+        },
+        "run-on": {
+          "type": "string",
+          "description": ""
+        }
+      },
+      "additionalProperties": true,
+      "required": ["remote-transport"]
+    },
+    "task": { "$ref": "file:task"},
+    "parameters": {
+      "type": "object",
+      "description": "JSON formatted parameters to be provided to task"
+    }
+  },
+  "required": ["target", "task"]
+}
