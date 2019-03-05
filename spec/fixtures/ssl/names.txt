@@ -1,0 +1,2 @@
+common-name=aceserver
+alt-names=localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1

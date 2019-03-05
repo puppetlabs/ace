@@ -31,6 +31,6 @@ COPY --from=build /ace /ace
 WORKDIR /ace
 
 EXPOSE 44633
-# ENV ACE_CONF /ace/config/docker.conf
+ENV ACE_CONF /ace/config/docker.conf
 
-ENTRYPOINT bundle exec puma -p 44633 -C puma_config.rb
+ENTRYPOINT bundle exec puma -C config/transport_tasks_config.rb
