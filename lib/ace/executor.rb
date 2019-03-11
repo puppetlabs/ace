@@ -9,6 +9,9 @@ module ACE
     def run_task(connection_info, task, arguments, _options = {})
       if connection_info[:'remote-transport'] == 'panos' &&
          task.files.first['filename'] == 'echo.sh'
+        if arguments['sleep']
+          sleep(arguments['sleep'])
+        end
         [200, {
           node: 'some_node_id',
           status: 'success',

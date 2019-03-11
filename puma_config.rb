@@ -39,6 +39,11 @@ Logging.logger[:root].add_appenders Logging.appenders.stderr(
 
 # threads 0, config.concurrency
 
+# Spin up 10 workers
+workers 10
+# Single threaded per worker
+threads 0, 1
+
 impl = ACE::TransportApp.new # (config)
 # unless config.whitelist.nil?
 #   impl = ACE::ACL.new(impl, config.whitelist)
