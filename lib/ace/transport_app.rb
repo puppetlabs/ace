@@ -60,11 +60,22 @@ module ACE
 
       body = JSON.parse(request.body.read)
       #error = validate_schema(@schemas["ace-run_task"], body)
-#      return [400, error.to_json] unless error.nil?
+      #return [400, error.to_json] unless error.nil?
 
-      opts = body['target'].merge('protocol' => 'local')
+      opts = body['target'].merge('protocol' => 'remote', 'run_on' => 'localhost')
 
       target = [Bolt::Target.new(body['target']['hostname'], opts)]
+
+      inventory_hash = {"nodes"=>
+        [
+          Bolt::Target.new('localhost', {'protocol' => 'local'}).to_h, 
+          target.first.to_h
+        ]
+      }
+
+      inventory = Bolt::Inventory.new(inventory_hash)
+
+      target.first.inventory = inventory
 
       task = Bolt::Task::PuppetServer.new(body['task'], @file_cache)
 
