@@ -61,5 +61,19 @@ module ACE
 
       [result.first, result.last.to_json]
     end
+
+    post '/demo_fork' do
+      content_type :json
+
+      body = JSON.parse(request.body.read)
+
+      parameters = body['parameters'] || {}
+
+      result = @executor.demo_fork(parameters)
+
+      puts result
+
+      [result.first, result.last.to_json]
+    end
   end
 end
