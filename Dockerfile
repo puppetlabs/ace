@@ -10,10 +10,16 @@ RUN mkdir /ace
 # Gemfile requires gemspec which requires ace/version which requires ace
 ADD . /ace
 WORKDIR /ace
+RUN rm Gemfile.lock
 RUN bundle install --no-cache --path vendor/bundle
 
+# symlink the usr local ruby to the one expected
+# in a task
+RUN mkdir -p /opt/puppetlabs/puppet/bin/ && \
+    ln -s /usr/bin/ruby /opt/puppetlabs/puppet/bin/ruby
+
 # Final image
-FROM alpine:3.8
+FROM build
 ARG ace_version=no-version
 LABEL org.label-schema.maintainer="Network Automation Team <team-network-automation@puppet.com>" \
       org.label-schema.vendor="Puppet" \
