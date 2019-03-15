@@ -25,27 +25,9 @@ module ACE
       }]
     end
 
-    def demo_fork(arguments, _options = {})
-      if arguments['fork'] && arguments['fork'].casecmp('true').zero?
-        reader, writer = IO.pipe
-        require 'puppet'
-        pid = fork {
-          reader.close
-          env = get_demo_env(arguments)
-          response = build_response(env)
-          writer.puts JSON.generate(response)
-        }
-        unless pid
-          log "Could not fork"
-          exit 1
-        end
-        writer.close
-        output = reader.read
-        JSON.parse(output)
-      else
-        env = get_demo_env(arguments)
-        build_response(env)
-      end
+    def demo_fork(_connection_info, _task, arguments, _options = {})
+      env = get_demo_env(arguments)
+      build_response(env)
     end
 
     def run_task(connection_info, task, arguments, _options = {})
