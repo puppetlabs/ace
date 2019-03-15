@@ -21,7 +21,7 @@ Or install it yourself as:
 Run the puma server to get an instance started:
 
 ```
-bundle exec puma -C puma_config.rb
+ACE_CONF=config/local.conf bundle exec puma -C config/transport_tasks_config.rb
 ```
 
 ## Development
