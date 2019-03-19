@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+require 'rototiller'
+require_relative 'lib/acceptance/ace_setup_helper'
+
+# rubocop:disable Style/MixinUsage
+extend Acceptance::AceSetupHelper
+# rubocop:enable Style/MixinUsage
+
+namespace :test do
+  desc "Run ace acceptance tests against a published gem"
+
+  desc "Run ace acceptance tests against a git repo"
+
+  desc "Run ace acceptance tests against a package"
+end
