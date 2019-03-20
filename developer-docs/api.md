@@ -43,6 +43,10 @@ For example, the following runs the 'commit' task on `fw.example.net`:
 }
 ```
 
+#### Response
+If the task runs the response will have status 200.
+The response will be a standard bolt Result JSON object.
+
 ## Data Object Definitions
 
 ### RSAPI Transport Object
@@ -53,10 +57,6 @@ Read more about [Transports](https://github.com/puppetlabs/puppet-resource_api#r
 
 ### Task Object
 This is a copy of [bolt's task object](https://github.com/puppetlabs/bolt/blob/master/developer-docs/bolt-api-servers.md#task-object)
-
-### Response
-If the task runs the response will have status 200.
-The response will be a standard bolt Result JSON object.
 
 
 ## Running ACE in a container
