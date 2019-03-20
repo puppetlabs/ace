@@ -11,74 +11,52 @@ Each API endpoint accepts a request as described below. The request body must be
 - `task`: [Task Object](#task-object), *required* - Task to run on target.
 - `parameters`: Object, *optional* - JSON formatted parameters to be provided to task.
 
-For example, the following runs the 'echo' task on linux_target.net:
+For example, the following runs the 'commit' task on `fw.example.net`:
 ```
 {
-  "target": {
-    "remote-transport": "panos",
-    "user": "foo",
-    "password": "wibble"
+  "target":{
+    "remote-transport":"panos",
+    "host":"fw.example.net",
+    "user":"foo",
+    "password":"wibble"
   },
-  "task": {
+  "task":{
     "metadata":{},
-    "name":"sample::echo",
-    "files":[{
-      "filename":"echo.sh",
-      "sha256":"c5abefbdecee006bd65ef6f625e73f0ebdd1ef3f1b8802f22a1b9644a516ce40",
-      "size_bytes":64,
-      "uri":{
-        "path":"/puppet/v3/file_content/tasks/sample/echo.sh",
-        "params":{
-          "environment":"production"}
+    "name":"panos::commit",
+    "files":[
+      {
+        "filename":"commit.rb",
+        "sha256":"c5abefbdecee006bd65ef6f625e73f0ebdd1ef3f1b8802f22a1b9644a516ce40",
+        "size_bytes":640,
+        "uri":{
+          "path":"/puppet/v3/file_content/tasks/panos/commit.rb",
+          "params":{
+            "environment":"production"
+          }
+        }
       }
-    }]
+    ]
   },
-  "parameters": {
-    "message": "Hello world"
+  "parameters":{
+    "message":"Hello world"
   }
 }
 ```
+
+#### Response
+If the task runs the response will have status 200.
+The response will be a standard bolt Result JSON object.
+
+## Data Object Definitions
 
 ### RSAPI Transport Object
 The `target` is a JSON object which reflects the schema of the `remote-transport`.
 e.g. If `remote-transport` is `panos`, the object should validate against the panos transport schema.
 
+Read more about [Transports](https://github.com/puppetlabs/puppet-resource_api#remote-resources) in the Resource API README. The `target` will contain both connection info and bolt's keywords for connection management.
+
 ### Task Object
-This is nearly identical to the [task detail JSON
-object](https://github.com/puppetlabs/puppetserver/blob/master/documentation/puppet-api/v3/task_detail.json)
-from [puppetserver](https://github.com/puppetlabs/puppetserver), with an
-additional `file_content` key.
-
-See the [schema](../lib/ace/schemas/task.json)
-The task is a JSON object which includes the following keys:
-
-#### Name
-
-The name of the task
-
-#### Metadata
-The metadata object is optional, and contains metadata about the task being run. It includes the following keys:
-
-- `description`: String, *optional* - The task description from it's metadata.
-- `parameters`: Object, *optional* - A JSON object whose keys are parameter names, and whose values are JSON objects with 2 keys:
-    - `description`: String, *optional* - The parameter description.
-    - `type`: String, *optional* - The type the parameter should accept.
-    - `sensitive`: Boolean, *optional* - Whether the task runner should treat the parameter value as sensitive
-    - `input_method`: String, *optional* - What input method should be used to pass params to task (stdin, environment, powershell)
-
-#### Files
-The files array is required, and contains details about the files the task needs as well as how to get them. Array items should be objects with the following keys:
-- `uri`: Object, *required* - Information on how to request task files
-    - `path`: String, *required* - Relative URI for requesting task content
-    - `params`: Object, *required* - Query parameters for locating task data
-        - `environment`: String, *required* - Environment task files are in
-- `sha256`: String, *required* - Shasum of the file contents
-- `filename`: String, *required* - File name including extension
-- `size`: Number, *optional* - Size of file in Bytes
-
-### Response
-If the task runs the response will have status 200.
-The response will be a standard ace Result JSON object.
+This is a copy of [bolt's task object](https://github.com/puppetlabs/bolt/blob/master/developer-docs/bolt-api-servers.md#task-object)
 
 
 ## Running ACE in a container
