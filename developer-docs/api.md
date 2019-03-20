@@ -11,30 +11,34 @@ Each API endpoint accepts a request as described below. The request body must be
 - `task`: [Task Object](#task-object), *required* - Task to run on target.
 - `parameters`: Object, *optional* - JSON formatted parameters to be provided to task.
 
-For example, the following runs the 'echo' task on linux_target.net:
+For example, the following runs the 'commit' task on `fw.example.net`:
 ```
 {
-  "target": {
-    "remote-transport": "panos",
-    "user": "foo",
-    "password": "wibble"
+  "target":{
+    "remote-transport":"panos",
+    "host":"fw.example.net",
+    "user":"foo",
+    "password":"wibble"
   },
-  "task": {
+  "task":{
     "metadata":{},
-    "name":"sample::echo",
-    "files":[{
-      "filename":"echo.sh",
-      "sha256":"c5abefbdecee006bd65ef6f625e73f0ebdd1ef3f1b8802f22a1b9644a516ce40",
-      "size_bytes":64,
-      "uri":{
-        "path":"/puppet/v3/file_content/tasks/sample/echo.sh",
-        "params":{
-          "environment":"production"}
+    "name":"panos::commit",
+    "files":[
+      {
+        "filename":"commit.rb",
+        "sha256":"c5abefbdecee006bd65ef6f625e73f0ebdd1ef3f1b8802f22a1b9644a516ce40",
+        "size_bytes":640,
+        "uri":{
+          "path":"/puppet/v3/file_content/tasks/panos/commit.rb",
+          "params":{
+            "environment":"production"
+          }
+        }
       }
-    }]
+    ]
   },
-  "parameters": {
-    "message": "Hello world"
+  "parameters":{
+    "message":"Hello world"
   }
 }
 ```
