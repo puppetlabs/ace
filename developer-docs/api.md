@@ -45,6 +45,8 @@ For example, the following runs the 'echo' task on linux_target.net:
 The `target` is a JSON object which reflects the schema of the `remote-transport`.
 e.g. If `remote-transport` is `panos`, the object should validate against the panos transport schema.
 
+Read more about [Transports](https://github.com/puppetlabs/puppet-resource_api#remote-resources) in the Resource API README. The `target` will contain both connection info and bolt's keywords for connection management.
+
 ### Task Object
 This is a copy of [bolt's task object](https://github.com/puppetlabs/bolt/blob/master/developer-docs/bolt-api-servers.md#task-object)
 
