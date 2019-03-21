@@ -8,6 +8,7 @@
 
 require 'ace/transport_app'
 require 'ace/config'
+require 'bolt_server/acl'
 require 'bolt/logger'
 
 Bolt::Logger.initialize_logging
@@ -40,8 +41,8 @@ bind bind_addr
 threads 0, config['concurrency']
 
 impl = ACE::TransportApp.new(config)
-# unless config.whitelist.nil?
-#   impl = ACE::ACL.new(impl, config.whitelist)
-# end
+unless config['whitelist'].nil?
+  impl = BoltServer::ACL.new(impl, config['whitelist'])
+end
 
 app impl
