@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ACE execute_catalog request",
+  "description": "POST /execute_catalog request schema for ACE",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "object",
+      "description": "Contains the Transport schema to connect to the remote target",
+      "properties": {
+        "remote-transport": {
+          "type": "string",
+          "description": "The name of the transport being used"
+        }
+      },
+      "additionalProperties": true,
+      "required": ["remote-transport"]
+    },
+    "compiler": {
+      "type": "object",
+      "description": "Contains additional information to compile the catalog",
+      "properties": {
+        "certname": {
+          "type": "string",
+          "description": "The certname of the target"
+        },
+        "environment": {
+          "type": "string",
+          "description": "The name of the environment for which to compile the catalog."
+        },
+        "transaction_uuid": {
+          "type": "string",
+          "description": "The id for tracking the catalog compilation and report submission."
+        },
+        "job_id": {
+          "type": "string",
+          "description": "The id of the orchestrator job that triggered this run."
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "certname",
+        "environment"
+      ]
+    }
+  },
+  "required": ["target", "compiler"]
+}

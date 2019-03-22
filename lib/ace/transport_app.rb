@@ -15,7 +15,8 @@ module ACE
       @executor = ACE::Executor.new('production')
 
       @schemas = {
-        "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json')))
+        "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json'))),
+        "execute_catalog" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-execute_catalog.json')))
       }
       shared_schema = JSON::Schema.new(JSON.parse(File.read(File.join(__dir__, 'schemas', 'task.json'))),
                                        Addressable::URI.parse("file:task"))
@@ -60,6 +61,37 @@ module ACE
       result = @executor.run_task(connection_info, task, parameters)
 
       [result.first, result.last.to_json]
+    end
+
+    post '/execute_catalog' do
+      content_type :json
+
+      body = JSON.parse(request.body.read)
+      error = validate_schema(@schemas["execute_catalog"], body)
+      return [400, error.to_json] unless error.nil?
+
+      # simulate expected error cases
+      if body['compiler']['certname'] == 'fail.example.net'
+        [200, { _error: {
+          msg: 'catalog compile failed',
+          kind: 'puppetlabs/ace/compile_failed',
+          details: 'upstream api errors go here'
+        } }.to_json]
+      elsif body['compiler']['certname'] == 'credentials.example.net'
+        [200, { _error: {
+          msg: 'target specification invalid',
+          kind: 'puppetlabs/ace/target_spec',
+          details: 'upstream api errors go here'
+        } }.to_json]
+      elsif body['compiler']['certname'] == 'reports.example.net'
+        [200, { _error: {
+          msg: 'report submission failed',
+          kind: 'puppetlabs/ace/reporting_failed',
+          details: 'upstream api errors go here'
+        } }.to_json]
+      else
+        [200, '{}']
+      end
     end
   end
 end
