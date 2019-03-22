@@ -76,19 +76,19 @@ module ACE
           msg: 'catalog compile failed',
           kind: 'puppetlabs/ace/compile_failed',
           details: 'upstream api errors go here'
-        } }]
+        } }.to_json]
       elsif body['compiler']['certname'] == 'credentials.example.net'
         [200, { _error: {
           msg: 'target specification invalid',
           kind: 'puppetlabs/ace/target_spec',
           details: 'upstream api errors go here'
-        } }]
+        } }.to_json]
       elsif body['compiler']['certname'] == 'reports.example.net'
         [200, { _error: {
           msg: 'report submission failed',
           kind: 'puppetlabs/ace/reporting_failed',
           details: 'upstream api errors go here'
-        } }]
+        } }.to_json]
       else
         [200, '{}']
       end
