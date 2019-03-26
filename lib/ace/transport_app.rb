@@ -2,6 +2,7 @@
 
 require 'ace'
 require 'ace/executor'
+require 'ace/fork_util'
 require 'bolt/target'
 require 'bolt/task'
 require 'json'
@@ -58,7 +59,9 @@ module ACE
 
       parameters = body['parameters'] || {}
 
-      result = @executor.run_task(connection_info, task, parameters)
+      result = ForkUtil.isolate do
+        @executor.run_task(connection_info, task, parameters)
+      end
 
       [result.first, result.last.to_json]
     end
@@ -92,6 +95,24 @@ module ACE
       else
         [200, '{}']
       end
+    end
+
+    post '/demo_fork' do
+      content_type :json
+
+      body = JSON.parse(request.body.read)
+
+      parameters = body['parameters'] || {}
+
+      result = if parameters['fork'] && parameters['fork'].casecmp('true').zero?
+                 ForkUtil.isolate do
+                   @executor.demo_fork('', '', parameters)
+                 end
+               else
+                 @executor.demo_fork('', '', parameters)
+               end
+
+      [result.first, result.last.to_json]
     end
   end
 end

@@ -77,14 +77,13 @@ RSpec.describe ACE::TransportApp do
   ################
   describe '/run_task' do
     it 'runs an echo task' do
+      expect(ACE::ForkUtil).to receive(:isolate).and_yield
+
       expect(executor).to receive(:run_task)
         .with(connection_info,
               instance_of(Bolt::Task),
-              "message" => "Hello!") do |target, task, _params|
-        expect(target).to be_a Hash
-        expect(task).to have_attributes(name: 'sample::echo')
-        [200, { "status" => "success", "result" => { "output" => 'got passed the message: Hello!' } }]
-      end
+              "message" => "Hello!")
+        .and_return([200, { "status" => "success", "result" => { "output" => 'got passed the message: Hello!' } }])
 
       post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
 
