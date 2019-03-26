@@ -1,8 +1,12 @@
 version: "3"
 services:
-  ace:
+  aceserver:
     build: .
-    image: puppet/ace:0.1.0
-    container_name: ace_default
     ports:
       - "44633:44633"
+    tty: true
+    stdin_open: true
+networks:
+  default:
+    external:
+      name: spec_default
