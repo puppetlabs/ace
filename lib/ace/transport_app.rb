@@ -117,23 +117,5 @@ module ACE
         [200, '{}']
       end
     end
-
-    post '/demo_fork' do
-      content_type :json
-
-      body = JSON.parse(request.body.read)
-
-      parameters = body['parameters'] || {}
-
-      result = if parameters['fork'] && parameters['fork'].casecmp('true').zero?
-                 ForkUtil.isolate do
-                   @executor.demo_fork('', '', parameters)
-                 end
-               else
-                 @executor.demo_fork('', '', parameters)
-               end
-
-      [result.first, result.last.to_json]
-    end
   end
 end
