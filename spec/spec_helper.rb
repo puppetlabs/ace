@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
-require "ace"
 
 if ENV['COVERAGE'] == 'yes'
   require 'simplecov'
@@ -17,7 +16,6 @@ if ENV['COVERAGE'] == 'yes'
     track_files 'lib/**/*.rb'
 
     add_filter 'lib/ace/version.rb'
-    add_filter 'lib/ace.rb'
 
     add_filter '/spec'
 

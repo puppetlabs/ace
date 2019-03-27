@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'ace'
 require 'ace/fork_util'
 require 'bolt/executor'
 require 'bolt/inventory'
