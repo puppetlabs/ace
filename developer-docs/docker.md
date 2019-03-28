@@ -36,7 +36,9 @@ Once the Puppetserver is ready, the following message is reported:
 
 ## Verifying the services
 
-[Postman](https://www.getpostman.com/) is advisable to verify that the endpoints are configured. In order to set up Postman, navigate to Settings > Certificates and add client certificates for hosts `0.0.0.0:8140` and `0.0.0.0:44633` where the CRT file points to `spec/fixtures/ssl/cert.pem` and Key file points to `spec/fixtures/ssl/key.pem`
+[Postman](https://www.getpostman.com/) is advisable to verify that the endpoints are configured. In order to set up Postman, navigate to Settings > Certificates and add client certificates for hosts `0.0.0.0:8140` and `0.0.0.0:44633` where the CRT file points to `spec/volumes/puppet/ssl/certs/puppet.pem` and Key file points to `spec/volumes/puppet/ssl/private_keys/puppet.pem`
+
+*Note*: These cert and key files will only be created when the PuppetServer container has finished initalising.
 
 ### PuppetServer /tasks/:module/:task
 
