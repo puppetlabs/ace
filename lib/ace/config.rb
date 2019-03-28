@@ -2,7 +2,6 @@
 
 require 'hocon'
 require 'bolt_server/base_config'
-require 'bolt/error'
 
 module ACE
   class Config < BoltServer::BaseConfig
@@ -28,7 +27,7 @@ module ACE
     end
 
     def required_keys
-      super + %w[file-server-uri]
+      super + %w[file-server-uri cache-dir]
     end
 
     def service_name

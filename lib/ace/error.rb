@@ -27,21 +27,5 @@ module ACE
     def to_json(opts = nil)
       to_h.to_json(opts)
     end
-
-    def to_puppet_error
-      Puppet::DataTypes::Error.from_asserted_hash(to_h)
-    end
-  end
-
-  class CLIError < ACE::Error
-    def initialize(msg)
-      super(msg, "ace/cli-error")
-    end
-  end
-
-  class ValidationError < ACE::Error
-    def initialize(msg)
-      super(msg, 'ace/validation-error')
-    end
   end
 end
