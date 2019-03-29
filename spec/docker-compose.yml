@@ -1,30 +1,44 @@
-version: "3"
+version: '3'
+
 services:
+  puppet:
+    hostname: puppet
+    build: .
+    ports:
+      - 8140:8140
+    environment:
+      - DNS_ALT_NAMES=puppet,localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0
+      - PUPPETDB_SERVER_URLS=https://puppetdb:8081
+    volumes:
+      - ./volumes/puppet:/etc/puppetlabs/puppet/
+      - ./volumes/serverdata:/opt/puppetlabs/server/data/puppetserver/
+
   postgres:
-    image: postgres:9.6
     environment:
       - POSTGRES_PASSWORD=puppetdb
       - POSTGRES_USER=puppetdb
       - POSTGRES_DB=puppetdb
+    expose:
+      - 5432
+    image: postgres:9.6
     volumes:
-      - ./fixtures/puppetdb/custom_source:/docker-entrypoint-initdb.d
-  puppetdb:
-    build:
-      context: .
-      dockerfile: Dockerfile.puppetdb
-    environment:
-      - "USE_PUPPETSERVER=false"
-    image: puppetdb
-    ports:
-      # 8081 is a common port
-      - "18081:8081"
+      - ./volumes/puppetdb-postgres/data:/var/lib/postgresql/data/
+      - ./postgres-custom:/docker-entrypoint-initdb.d
 
-  puppetserver:
-    build:
-      context: .
-      dockerfile: Dockerfile.puppetserver
-    image: puppet-server
+  puppetdb:
+    hostname: puppetdb
+    image: puppet/puppetdb
+    environment:
+      - PUPPETDB_PASSWORD=puppetdb
+      - PUPPETDB_USER=puppetdb
     ports:
-      - "8140:8140"
+      - 8080
+      - 8081
+    depends_on:
+      - postgres
+      - puppet
     volumes:
-      - ./fixtures/modules:/etc/puppetlabs/code/modules
+      - ./volumes/puppetdb/ssl:/etc/puppetlabs/puppet/ssl/
+
+networks:
+  default:
