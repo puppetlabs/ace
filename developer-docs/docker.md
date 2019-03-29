@@ -34,9 +34,15 @@ Once the Puppetserver is ready, the following message is reported:
 2019-03-18 15:42:19,965 INFO  [p.s.l.legacy-routes-service] The legacy routing service has successfully started and is now ready to handle requests
 ```
 
+At this point it is required to generate certs for the `aceserver`, this can be achieved though:
+
+`docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0,puppet`
+
+Reasoning for this is that it makes it easier to ensure that the cert names are consistent across environments.
+
 ## Verifying the services
 
-[Postman](https://www.getpostman.com/) is advisable to verify that the endpoints are configured. In order to set up Postman, navigate to Settings > Certificates and add client certificates for hosts `0.0.0.0:8140` and `0.0.0.0:44633` where the CRT file points to `spec/volumes/puppet/ssl/certs/puppet.pem` and Key file points to `spec/volumes/puppet/ssl/private_keys/puppet.pem`
+[Postman](https://www.getpostman.com/) is advisable to verify that the endpoints are configured. In order to set up Postman, navigate to Settings > Certificates and add client certificates for hosts `0.0.0.0:8140` and `0.0.0.0:44633` where the CRT file points to `spec/volumes/puppet/ssl/certs/aceserver.pem` and Key file points to `spec/volumes/puppet/ssl/private_keys/aceserver.pem`
 
 *Note*: These cert and key files will only be created when the PuppetServer container has finished initalising.
 
