@@ -21,21 +21,21 @@ RSpec.describe ACE::Config do
     ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
      'ssl-cipher-suites', 'loglevel', 'logfile', 'whitelist',
      'concurrency', 'cache-dir', 'file-server-conn-timeout',
-     'file-server-uri']
+     'file-server-uri', 'ssl-ca-crls']
   }
 
   let(:complete_env_keys) {
     ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'loglevel',
      'concurrency', 'file-server-conn-timeout',
-     'file-server-uri']
+     'file-server-uri', 'ssl-ca-crls']
   }
 
   let(:complete_ssl_keys) {
-    ['ssl-cert', 'ssl-key', 'ssl-ca-cert']
+    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'ssl-ca-crls']
   }
 
   let(:complete_required_keys) {
-    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'file-server-uri', 'cache-dir']
+    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'ssl-ca-crls', 'file-server-uri', 'cache-dir']
   }
 
   let(:complete_defaults) {

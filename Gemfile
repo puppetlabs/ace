@@ -14,8 +14,8 @@ group :development do
   gem 'bolt', git: 'https://github.com/puppetlabs/bolt', branch: 'master'
   gem 'github_changelog_generator', '~> 1.14'
   gem 'pry-byebug'
-
   gem 'rubocop-rspec'
+  gem 'webmock'
 end
 
 # Specify your gem's dependencies in agentless-catalog-executor.gemspec

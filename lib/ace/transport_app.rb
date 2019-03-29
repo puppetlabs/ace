@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require 'ace/fork_util'
+require 'ace/error'
 require 'bolt/executor'
 require 'bolt/inventory'
+require 'ace/plugin_cache'
 require 'bolt/target'
 require 'bolt/task/puppet_server'
 require 'bolt_server/file_cache'
@@ -15,7 +17,8 @@ module ACE
     def initialize(config = nil)
       @config = config
       @executor = Bolt::Executor.new(0, load_config: false)
-      @file_cache = BoltServer::FileCache.new(@config).setup
+      @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => File.join(@config['cache-dir'], 'tasks'))).setup
+      @plugins = ACE::PluginCache.new(@config.data.merge('cache-dir' => File.join(@config['cache-dir'], 'environments'))).setup
 
       @schemas = {
         "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json'))),
@@ -92,6 +95,8 @@ module ACE
       body = JSON.parse(request.body.read)
       error = validate_schema(@schemas["execute_catalog"], body)
       return [400, error.to_json] unless error.nil?
+
+      @plugins.sync(body['compiler']['environment'])
 
       # simulate expected error cases
       if body['compiler']['certname'] == 'fail.example.net'
