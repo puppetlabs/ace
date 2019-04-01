@@ -4,7 +4,7 @@ require 'ace/fork_util'
 require 'bolt/executor'
 require 'bolt/inventory'
 require 'bolt/target'
-require 'bolt/task'
+require 'bolt/task/puppet_server'
 require 'bolt_server/file_cache'
 require 'json'
 require 'json-schema'
@@ -74,7 +74,7 @@ module ACE
 
       target.first.inventory = inventory
 
-      task = Bolt::Task.new(body['task'], @file_cache)
+      task = Bolt::Task::PuppetServer.new(body['task'], @file_cache)
 
       parameters = body['parameters'] || {}
 
