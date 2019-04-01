@@ -1,3 +1,4 @@
+require: rubocop-rspec
 AllCops:
   TargetRubyVersion: 2.3
   Exclude:
@@ -5,6 +6,7 @@ AllCops:
     - 'vendored/**/*'
     - 'acceptance/vendor/**/*'
     - 'modules/**/*'
+    - 'spec/volumes/**/*'
 
 # Checks for if and unless statements that would fit on one line if written as a
 # modifier if/unless.
@@ -80,4 +82,11 @@ Metrics/ParameterLists:
   Enabled: false
 
 Metrics/PerceivedComplexity:
+  Enabled: false
+
+# Disable some of the stricter rspec tests, not useful for the webmock/sinatra tests
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/ExampleLength:
   Enabled: false

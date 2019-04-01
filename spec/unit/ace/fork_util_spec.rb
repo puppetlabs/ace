@@ -6,7 +6,7 @@ require 'ace/fork_util'
 # Integration level tests, to prove out functionality
 RSpec.describe ACE::ForkUtil do
   describe "#isolate" do
-    context "The function follows the happy path" do
+    context "when everything works out" do
       it 'returns the result' do
         return_value = described_class.isolate do
           "test string"
@@ -27,7 +27,7 @@ RSpec.describe ACE::ForkUtil do
       end
     end
 
-    context "The function runs into 'special' behaviour" do
+    context "when errors occur" do
       it 'exception thrown when the block returns invalid JSON' do
         expect {
           described_class.isolate do
@@ -48,6 +48,13 @@ RSpec.describe ACE::ForkUtil do
           ''
         end
         expect(return_value).to eq ''
+      end
+
+      it "a `nil` response is correctly returned as `nil`" do
+        return_value = described_class.isolate do
+          nil
+        end
+        expect(return_value).to be_nil
       end
     end
   end

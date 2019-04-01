@@ -11,47 +11,33 @@ RSpec.describe ACE::TransportApp do
     ACE::TransportApp.new
   end
 
+  before do
+    allow(Bolt::Executor).to receive(:new).and_return(executor)
+    allow(BoltServer::FileCache).to receive(:new).and_return(file_cache)
+    allow(file_cache).to receive(:setup)
+  end
+
   let(:executor) { instance_double(Bolt::Executor, 'executor') }
   let(:file_cache) { instance_double(BoltServer::FileCache, 'file_cache') }
   let(:task_response) { instance_double(Bolt::ResultSet, 'task_response') }
   let(:response) { instance_double(Bolt::Result, 'response') }
 
-  before(:each) do
-    expect(Bolt::Executor).to receive(:new).and_return(executor)
-    allow(BoltServer::FileCache).to receive(:new).and_return(file_cache)
-    allow(file_cache).to receive(:setup)
-  end
-
-  it 'responds ok' do
-    get '/'
-    expect(last_response).to be_ok
-    expect(last_response.status).to eq(200)
-  end
-
-  let(:connection_info) do
+  let(:status) do
     {
-      'remote-transport': 'panos',
-      'address': 'hostname',
-      'username': 'user',
-      'password': 'password'
+      node: "fw.example.net",
+      status: "success",
+      result: {
+        "output" => "Hello!"
+      }
     }
   end
-
-  let(:echo_task) do
+  let(:body) do
     {
-      'name': 'sample::echo',
-      'metadata': {
-        'description': 'Echo a message',
-        'parameters': { 'message': 'Default message' }
-      },
-      files: [{
-        filename: "echo.sh",
-        sha256: "foo",
-        uri: {}
-      }]
+      'task': echo_task,
+      'target': connection_info,
+      'parameters': { "message": "Hello!" }
     }
   end
-
   let(:execute_catalog_body) do
     {
       "target": {
@@ -68,37 +54,40 @@ RSpec.describe ACE::TransportApp do
       }
     }
   end
-
-  let(:body) do
+  let(:echo_task) do
     {
-      'task': echo_task,
-      'target': connection_info,
-      'parameters': { "message": "Hello!" }
+      'name': 'sample::echo',
+      'metadata': {
+        'description': 'Echo a message',
+        'parameters': { 'message': 'Default message' }
+      },
+      files: [{
+        filename: "echo.sh",
+        sha256: "foo",
+        uri: {}
+      }]
+    }
+  end
+  let(:connection_info) do
+    {
+      'remote-transport': 'panos',
+      'address': 'hostname',
+      'username': 'user',
+      'password': 'password'
     }
   end
 
-  let(:status) do
-    {
-      node: "fw.example.net",
-      status: "success",
-      result: {
-        "output" => "Hello!"
-      }
-    }
+  it 'responds ok' do
+    get '/'
+    expect(last_response).to be_ok
+    expect(last_response.status).to eq(200)
   end
 
   ################
   # Tasks Endpoint
   ################
   describe '/run_task' do
-    it 'throws an ace/schema_error if the request is invalid' do
-      post '/run_task', JSON.generate({}), 'CONTENT_TYPE' => 'text/json'
-
-      expect(last_response.body).to match(%r{ace\/schema-error})
-      expect(last_response.status).to eq(400)
-    end
-
-    before(:each) {
+    before do
       allow(ACE::ForkUtil).to receive(:isolate).and_yield
 
       allow(executor).to receive(:run_task).with(
@@ -109,7 +98,14 @@ RSpec.describe ACE::TransportApp do
 
       allow(task_response).to receive(:first).and_return(response)
       allow(response).to receive(:status_hash).and_return(status)
-    }
+    end
+
+    it 'throws an ace/schema_error if the request is invalid' do
+      post '/run_task', JSON.generate({}), 'CONTENT_TYPE' => 'text/json'
+
+      expect(last_response.body).to match(%r{ace\/schema-error})
+      expect(last_response.status).to eq(400)
+    end
 
     context 'when the task executes cleanly' do
       it 'runs returns the output' do
@@ -218,6 +214,7 @@ RSpec.describe ACE::TransportApp do
   describe '/execute_catalog' do
     describe 'success' do
       let(:certname) { 'fw.example.net' }
+
       it 'returns 200 with empty body when success' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect(last_response.errors).to match(/\A\Z/)
@@ -230,6 +227,7 @@ RSpec.describe ACE::TransportApp do
 
     describe 'catalog compile failed' do
       let(:certname) { 'fail.example.net' }
+
       it 'returns 200 with error in body' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect(last_response.errors).to match(/\A\Z/)
@@ -243,6 +241,7 @@ RSpec.describe ACE::TransportApp do
 
     describe 'target specification invalid' do
       let(:certname) { 'credentials.example.net' }
+
       it 'returns 200 with error in body' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect(last_response.errors).to match(/\A\Z/)
@@ -256,6 +255,7 @@ RSpec.describe ACE::TransportApp do
 
     describe 'report submission failed' do
       let(:certname) { 'reports.example.net' }
+
       it 'returns 200 with error in body' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect(last_response.errors).to match(/\A\Z/)
