@@ -7,6 +7,14 @@ require 'rack/test'
 RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
 
+  def build_config(config_file, from_env = false)
+    config = ACE::Config.new
+    config.load_file_config(config_file)
+    config.load_env_config if from_env
+    config.validate
+    config
+  end
+
   def app
     ACE::TransportApp.new
   end
@@ -52,6 +60,15 @@ RSpec.describe ACE::TransportApp do
         "transaction_uuid": "<uuid string>",
         "job_id": "<id string>"
       }
+    }
+  end
+  let(:passthrough_body) do
+    {
+        "passthrough": {
+            "method": "post",
+            "uri": "https://0.0.0.0:44633/execute_catalog",
+            "params": parameters
+        }
     }
   end
   let(:echo_task) do
@@ -266,5 +283,72 @@ RSpec.describe ACE::TransportApp do
         expect(result['_error']['msg']).to eq('report submission failed')
       end
     end
+  end
+
+  ##################
+  # Passthrough Endpoint
+  ##################
+  describe '/passthrough' do
+    let(:configdir) { File.join(__dir__, '../../', 'fixtures', 'api_server_configs') }
+    let(:globalconfig) { File.join(configdir, 'global-ace-server.conf') }
+    let(:fake_env_config) { __FILE__ }
+
+
+    # describe 'success' do
+    #   let(:certname) { 'fw.example.net' }
+    #
+    #   it 'returns 200 with empty body when success' do
+    #     post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+    #     expect(last_response.errors).to match(/\A\Z/)
+    #     expect(last_response).to be_ok
+    #     expect(last_response.status).to eq(200)
+    #     result = JSON.parse(last_response.body)
+    #     expect(result).to eq({})
+    #   end
+    # end
+
+    describe 'passthrough catalog compile failed' do
+      let(:certname) { 'fail.example.net' }
+      let(:parameters) { execute_catalog_body }
+      let(:config) { build_config(globalconfig, true) }
+
+      it 'returns 200 with error in body' do
+        post '/passthrough', JSON.generate(passthrough_body), 'CONTENT_TYPE' => 'text/json'
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+        result = JSON.parse(last_response.body)
+        expect(result).to include('_error')
+        expect(result['_error']['msg']).to eq('catalog compile failed')
+      end
+    end
+
+    # describe 'target specification invalid' do
+    #   let(:certname) { 'credentials.example.net' }
+    #
+    #   it 'returns 200 with error in body' do
+    #     post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+    #     expect(last_response.errors).to match(/\A\Z/)
+    #     expect(last_response).to be_ok
+    #     expect(last_response.status).to eq(200)
+    #     result = JSON.parse(last_response.body)
+    #     expect(result).to include('_error')
+    #     expect(result['_error']['msg']).to eq('target specification invalid')
+    #   end
+    # end
+    #
+    # describe 'report submission failed' do
+    #   let(:certname) { 'reports.example.net' }
+    #
+    #   it 'returns 200 with error in body' do
+    #     post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+    #     expect(last_response.errors).to match(/\A\Z/)
+    #     expect(last_response).to be_ok
+    #     expect(last_response.status).to eq(200)
+    #     result = JSON.parse(last_response.body)
+    #     expect(result).to include('_error')
+    #     expect(result['_error']['msg']).to eq('report submission failed')
+    #   end
+    # end
   end
 end

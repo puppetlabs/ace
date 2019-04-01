@@ -9,6 +9,7 @@ require 'bolt_server/file_cache'
 require 'json'
 require 'json-schema'
 require 'sinatra'
+require 'net/http'
 
 module ACE
   class TransportApp < Sinatra::Base
@@ -53,6 +54,64 @@ module ACE
 
     post "/check" do
       [200, 'OK']
+    end
+
+    def ssl_cert
+      @ssl_cert ||= File.read(@config['ssl-cert'])
+    end
+
+    def ssl_key
+      @ssl_key ||= File.read(@config['ssl-key'])
+    end
+
+    post '/passthrough' do
+      content_type :json
+
+      body = JSON.parse(request.body.read)
+      return [400, 'request body not found'] if body.nil?
+
+      if body['passthrough']
+        if body['passthrough']['method']
+          if body['passthrough']['uri']
+            uri = URI(body['passthrough']['uri'])
+          else
+            return [400, 'passthrough URI not found']
+          end
+          if body['passthrough']['method'].nil?
+            return [400, 'passthrough method not found']
+          end
+          if body['passthrough']['method'].casecmp('get').zero?
+            https = Net::HTTP.new(uri.host, uri.port)
+            https.use_ssl = true
+            https.ssl_version = :TLSv1_2
+            https.ca_file = @config['ssl-ca-cert']
+            https.cert = OpenSSL::X509::Certificate.new(ssl_cert)
+            https.key = OpenSSL::PKey::RSA.new(ssl_key)
+            https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            res = https.get(uri)
+          elsif body['passthrough']['method'].casecmp('post').zero?
+            if body['passthrough']['params']
+              https = Net::HTTP.new(uri.host, uri.port)
+              https.use_ssl = true
+              https.ssl_version = :TLSv1_2
+              https.ca_file = @config['ssl-ca-cert']
+              https.cert = OpenSSL::X509::Certificate.new(ssl_cert)
+              https.key = OpenSSL::PKey::RSA.new(ssl_key)
+              https.verify_mode = OpenSSL::SSL::VERIFY_PEER
+              res = https.post(
+                uri, JSON(body['passthrough']['params']), "Content-Type" => "application/json"
+              )
+            else
+              return [400, 'passthrough params not found']
+            end
+          end
+          return [res.code.to_i, res.body]
+        else
+          return [400, 'passthrough method not found']
+        end
+      else
+        return [400, 'passthrough not found']
+      end
     end
 
     # run this with "curl -X POST http://0.0.0.0:44633/run_task -d '{}'"
