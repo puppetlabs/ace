@@ -4,11 +4,6 @@ require 'spec_helper'
 require 'ace/config'
 
 RSpec.describe ACE::Config do
-  let(:configdir) { File.join(__dir__, '../../', 'fixtures', 'api_server_configs') }
-  let(:globalconfig) { File.join(configdir, 'global-ace-server.conf') }
-  let(:requiredconfig) { File.join(configdir, 'required-ace-server.conf') }
-  let(:base_config) { Hocon.load(requiredconfig)['ace-server'] }
-
   def build_config(config_file, from_env = false)
     config = ACE::Config.new
     config.load_file_config(config_file)
@@ -16,6 +11,11 @@ RSpec.describe ACE::Config do
     config.validate
     config
   end
+
+  let(:configdir) { File.join(__dir__, '../../', 'fixtures', 'api_server_configs') }
+  let(:globalconfig) { File.join(configdir, 'global-ace-server.conf') }
+  let(:requiredconfig) { File.join(configdir, 'required-ace-server.conf') }
+  let(:base_config) { Hocon.load(requiredconfig)['ace-server'] }
 
   let(:complete_config_keys) {
     ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
@@ -100,8 +100,8 @@ RSpec.describe ACE::Config do
       "ACE_#{key.tr('-', '_').upcase}"
     end
 
-    before(:context) do
-      empty = ACE::Config.new
+    before(:context) do # ENV is global state needed to be manually cleaned # rubocop:disable RSpec/BeforeAfterAll
+      empty = described_class.new
       empty.env_keys.each do |key|
         transformed_key = transform_key(key)
         ENV[transformed_key] = if empty.int_keys.include?(key)
@@ -115,8 +115,8 @@ RSpec.describe ACE::Config do
     let(:fake_env_config) { __FILE__ }
     let(:config) { build_config(globalconfig, true) }
 
-    after(:context) do
-      ACE::Config.new.env_keys.each do |key|
+    after(:context) do # ENV is global state needed to be manually cleaned # rubocop:disable RSpec/BeforeAfterAll
+      described_class.new.env_keys.each do |key|
         ENV.delete(transform_key(key))
       end
     end
@@ -152,25 +152,25 @@ RSpec.describe ACE::Config do
 
   it "errors when concurrency is not an integer" do
     expect {
-      ACE::Config.new(base_config.merge('concurrency' => '10')).validate
+      described_class.new(base_config.merge('concurrency' => '10')).validate
     }.to raise_error(Bolt::ValidationError, "Configured 'concurrency' must be a positive integer")
   end
 
   it "errors when concurrency is zero" do
     expect {
-      ACE::Config.new(base_config.merge('concurrency' => 0)).validate
+      described_class.new(base_config.merge('concurrency' => 0)).validate
     }.to raise_error(Bolt::ValidationError, "Configured 'concurrency' must be a positive integer")
   end
 
   it "errors when concurrency is negative" do
     expect {
-      ACE::Config.new(base_config.merge('concurrency' => -1)).validate
+      described_class.new(base_config.merge('concurrency' => -1)).validate
     }.to raise_error(Bolt::ValidationError, "Configured 'concurrency' must be a positive integer")
   end
 
   it "errors when file-server-conn-timeout is not an integer" do
     expect {
-      ACE::Config.new(base_config.merge('file-server-conn-timeout' => '120')).validate
+      described_class.new(base_config.merge('file-server-conn-timeout' => '120')).validate
     }.to raise_error(Bolt::ValidationError, "Configured 'file-server-conn-timeout' must be a positive integer")
   end
 end
