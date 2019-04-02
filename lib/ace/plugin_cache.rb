@@ -56,9 +56,8 @@ module ACE
       Puppet.settings[:facts_terminus] = :network_device
     end
 
-    def setup_ssl
-      @ssl_provider = Puppet::SSL::SSLProvider.new
-      @ssl_provider.create_context(
+    def ssl_context
+      @ssl_context ||= Puppet::SSL::SSLProvider.new.create_context(
         cacerts: [OpenSSL::X509::Certificate.new(File.read(config['ssl-ca-cert']))],
         crls: [OpenSSL::X509::CRL.new(File.read(config['ssl-ca-crls']))],
         private_key: OpenSSL::PKey::RSA.new(File.read(config['ssl-key'])),
@@ -81,10 +80,13 @@ module ACE
         Puppet[:codedir] = File.join(environments_dir, 'code')
         Puppet[:plugindest] = File.join(environments_dir, 'plugins')
         Puppet.settings.use :main, :agent, :ssl
-        ssl_context = setup_ssl
         pool = Puppet::Network::HTTP::NoCachePool.new
-        Puppet.override(ssl_context: ssl_context, http_pool: pool) do
-          Puppet::Configurer::PluginHandler.new.download_plugins(env)
+        begin
+          Puppet.override(ssl_context: ssl_context, http_pool: pool) do
+            Puppet::Configurer::PluginHandler.new.download_plugins(env)
+          end
+        ensure
+          pool.close
         end
       end
       libdir(File.join(environments_dir, 'plugins'))

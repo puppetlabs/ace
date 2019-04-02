@@ -5,10 +5,10 @@ require 'webmock/rspec'
 require 'hocon'
 
 RSpec.describe ACE::PluginCache do
-  let(:puppetserver_directory) { instance_double(File, '/foo/', readable?: true, file?: false, directory?: true) }
-  let(:puppetserver_directory_path) { puppetserver_directory.path }
-  let(:fake_file) { instance_double(File, "fake_file.rb", readable?: true, file?: true, directory?: false) }
-  let(:fake_file_path) { fake_file.path }
+  let(:plugin_cache) { described_class.new(base_config) }
+
+  let(:puppetserver_directory_path) { '/foo/' }
+  let(:fake_file_path) { 'fake_file.rb' }
   let(:params) { '?checksum_type=md5&environment=production&ignore=.hg&links=follow&recurse=true&source_permissions=' }
   let(:base_config) do
     {
@@ -21,22 +21,46 @@ RSpec.describe ACE::PluginCache do
     }
   end
 
-  describe '#setup_ssl' do
-    it {
-      expect(described_class.new(base_config).setup_ssl).to be_a(Puppet::SSL::SSLContext)
-    }
+  before do
+    allow(ACE::ForkUtil).to receive(:isolate).and_yield
   end
 
-  describe '#setup' do
-    it {
-      expect(described_class.new(base_config).setup).to be_a(described_class)
-    }
+  context 'with a mock filesystem' do
+    before do
+      allow(FileUtils).to receive(:mkdir_p)
+      allow(FileUtils).to receive(:cp_r)
+      allow(FileUtils).to receive(:touch)
+    end
+
+    describe '#ssl_context' do
+      it { expect(plugin_cache.ssl_context).to be_a(Puppet::SSL::SSLContext) }
+    end
+
+    describe '#setup' do
+      it { expect(plugin_cache.setup).to be_a(described_class) }
+      it "creates the cache-dir" do
+        plugin_cache.setup
+        expect(FileUtils).to have_received(:mkdir_p).with('/tmp/environments')
+      end
+    end
+
+    describe '#sync' do
+      it 'isolates the call' do
+        allow(plugin_cache).to receive(:sync_core).and_return('sync_response')
+
+        expect(plugin_cache.sync('param')).to eq 'sync_response'
+        expect(ACE::ForkUtil).to have_received(:isolate).ordered
+        expect(plugin_cache).to have_received(:sync_core).with('param').ordered
+      end
+    end
   end
 
-  describe '#sync' do
-    it {
-      allow(puppetserver_directory).to receive(:path).and_return('/foo/')
-      allow(fake_file).to receive(:path).and_return('fake_file.rb')
+  describe '#sync_core' do
+    # This example is a ugly tradeoff between more confidence in calling the
+    # Puppet::Configurer::PluginHandler.new.download_plugins methods and having
+    # simpler tests. Since we do not have good control or understanding of the
+    # Puppet API, we opt for the former.
+    it 'calls into the puppetserver to download plugins' do
       stub_request(:get, "https://localhost:9999/puppet/v3/file_metadatas/pluginfacts#{params}use")
         .to_return(
           status: 200,
@@ -83,10 +107,12 @@ RSpec.describe ACE::PluginCache do
       stub_request(:get, "https://localhost:9999/puppet/v3/file_content/plugins/fake_file.rb?environment=production")
         .to_return(status: 200, body: "foo", headers: {})
 
-      result = described_class.new(base_config).sync('production')
+      expect(ACE::ForkUtil).not_to have_received(:isolate)
+
+      result = plugin_cache.sync_core('production')
       folder_size = Dir[File.join(result, '**', '*')].count { |file| File.file?(file) }
       expect(folder_size).to eq 1
       expect(result).to be_a(String)
-    }
+    end
   end
 end
