@@ -11,6 +11,7 @@ require 'bolt/task/puppet_server'
 require 'json-schema'
 require 'json'
 require 'sinatra'
+require 'puppet/util/network_device/base'
 
 module ACE
   class TransportApp < Sinatra::Base
@@ -31,6 +32,54 @@ module ACE
       JSON::Validator.add_schema(shared_schema)
 
       super(nil)
+    end
+
+    # Initialises the puppet target.
+    # @param certname   The certificate name of the target.
+    # @param transport  The transport provider of the target.
+    # @param target     Target connection hash or legacy connection URI
+    # @return [Puppet device instance] Returns Puppet device instance
+    # @raise  [puppetlabs/ace/invalid_param] If nil parameter or no connection detail found
+    # @example Connect to device.
+    #   init_puppet_target('test_device.domain.com', 'panos',  JSON.parse("target":{
+    #                                                                       "remote-transport":"panos",
+    #                                                                       "host":"fw.example.net",
+    #                                                                       "user":"foo",
+    #                                                                       "password":"wibble"
+    #                                                                     }) ) => panos.device
+    def self.init_puppet_target(certname, transport, target)
+      unless target
+        raise ACE::Error.new("There was an error parsing the Puppet target. 'target' not found",
+                             'puppetlabs/ace/invalid_param')
+      end
+      unless certname
+        raise ACE::Error.new("There was an error parsing the Puppet compiler details. 'certname' not found",
+                             'puppetlabs/ace/invalid_param')
+      end
+      unless transport
+        raise ACE::Error.new("There was an error parsing the Puppet target. 'transport' not found",
+                             'puppetlabs/ace/invalid_param')
+      end
+
+      if target['uri']
+        if target['uri'] =~ URI::DEFAULT_PARSER.make_regexp
+          # Correct URL
+          url = target['uri']
+        else
+          raise ACE::Error.new("There was an error parsing the URI of the Puppet target",
+                               'puppetlabs/ace/invalid_param')
+        end
+      else
+        url = Hash[target.map { |(k, v)| [k.to_sym, v] }]
+        url.delete(:"remote-transport")
+      end
+
+      device_struct = Struct.new(:provider, :url, :name, :options)
+      # Return device
+      Puppet::Util::NetworkDevice.init(device_struct.new(transport,
+                                                         url,
+                                                         certname,
+                                                         {}))
     end
 
     def scrub_stack_trace(result)

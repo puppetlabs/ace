@@ -70,6 +70,23 @@ For example, the following will compile and execute a catalog on fw.example.net:
 }
 ```
 
+For pre-Transport devices (currently F5), a uri can be sent:
+
+```
+{
+  "target":{
+    "remote-transport":"f5",
+    "uri":"https://foo:wibble@f5.example.net/"
+  },
+  "compiler":{
+    "certname":"f5.example.net",
+    "environment":"development",
+    "transaction_uuid":"<uuid string>",
+    "job_id":"<id string>"
+  }
+}
+```
+
 #### Response
 TBD based on orchestrator's needs for feedback.
 
