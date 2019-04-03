@@ -98,7 +98,11 @@ module ACE
       error = validate_schema(@schemas["execute_catalog"], body)
       return [400, error.to_json] unless error.nil?
 
-      @plugins.sync(body['compiler']['environment'])
+      @plugins.with_synced_libdir(body['compiler']['environment']) do
+        # get facts/trusted facts
+        # get catalog
+        # apply catalog
+      end
 
       # simulate expected error cases
       if body['compiler']['certname'] == 'fail.example.net'

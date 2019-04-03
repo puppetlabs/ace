@@ -219,7 +219,8 @@ RSpec.describe ACE::TransportApp do
     before {
       allow(ACE::ForkUtil).to receive(:isolate).and_yield
 
-      allow(plugins).to receive(:sync).and_return('task_response')
+      allow(plugins).to receive(:with_synced_libdir).and_return('task_response')
+      allow(FileUtils).to receive(:remove_dir)
     }
 
     describe 'success' do

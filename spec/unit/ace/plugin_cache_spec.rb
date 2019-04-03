@@ -30,6 +30,7 @@ RSpec.describe ACE::PluginCache do
       allow(FileUtils).to receive(:mkdir_p)
       allow(FileUtils).to receive(:cp_r)
       allow(FileUtils).to receive(:touch)
+      allow(FileUtils).to receive(:remove_dir)
     end
 
     describe '#ssl_context' do
@@ -44,13 +45,13 @@ RSpec.describe ACE::PluginCache do
       end
     end
 
-    describe '#sync' do
+    describe '#with_synced_libdir' do
       it 'isolates the call' do
-        allow(plugin_cache).to receive(:sync_core).and_return('sync_response')
+        allow(plugin_cache).to receive(:with_synced_libdir_core).and_return('sync_response')
 
-        expect(plugin_cache.sync('param')).to eq 'sync_response'
+        expect(plugin_cache.with_synced_libdir('param')).to eq 'sync_response'
         expect(ACE::ForkUtil).to have_received(:isolate).ordered
-        expect(plugin_cache).to have_received(:sync_core).with('param').ordered
+        expect(plugin_cache).to have_received(:with_synced_libdir_core).with('param').ordered
       end
     end
   end
@@ -113,6 +114,19 @@ RSpec.describe ACE::PluginCache do
       folder_size = Dir[File.join(result, '**', '*')].count { |file| File.file?(file) }
       expect(folder_size).to eq 1
       expect(result).to be_a(String)
+    end
+  end
+
+  describe '#with_synced_libdir_core' do
+    before do
+      allow(FileUtils).to receive(:remove_dir)
+    end
+
+    it 'calls remove_dir after yielding' do
+      allow(plugin_cache).to receive(:sync_core).with('production').and_return('/tmp/foo/blah/plugins')
+      expect(ACE::ForkUtil).not_to have_received(:isolate)
+      expect { |b| plugin_cache.with_synced_libdir_core('production', &b) }.to yield_with_no_args
+      expect(FileUtils).to have_received(:remove_dir).with('/tmp/foo/blah/plugins')
     end
   end
 end

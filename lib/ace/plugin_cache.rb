@@ -19,9 +19,18 @@ module ACE
       self
     end
 
-    # @returns the tmp libdir directory which will be where catalogs get executed from
-    def sync(*args)
-      ForkUtil.isolate { sync_core(*args) }
+    def with_synced_libdir(environment)
+      ForkUtil.isolate do
+        with_synced_libdir_core(environment)
+      end
+    end
+
+    def with_synced_libdir_core(environment)
+      libdir = sync_core(environment)
+      Puppet[:libdir] = libdir
+      yield
+    ensure
+      FileUtils.remove_dir(libdir)
     end
 
     # the Puppet[:libdir] will point to a tmp location
@@ -30,10 +39,10 @@ module ACE
     def libdir(plugin_dest)
       tmpdir = Dir.mktmpdir(['plugins', plugin_dest])
       cache_dir_mutex.with_write_lock do
-        FileUtils.cp_r(plugin_dest, tmpdir)
+        FileUtils.cp_r(File.join(plugin_dest, '.'), tmpdir)
         FileUtils.touch(tmpdir)
       end
-      File.join(tmpdir, 'plugins')
+      tmpdir
     end
 
     def environment_dir(environment)
@@ -65,6 +74,8 @@ module ACE
       )
     end
 
+    # @returns the tmp libdir directory which will be where
+    # Puppet[:libdir] is referenced too
     def sync_core(environment)
       configure_puppet_settings
       env = Puppet::Node::Environment.remote(environment)
