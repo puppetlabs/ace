@@ -64,7 +64,17 @@ module ACE
     post '/run_task' do
       content_type :json
 
-      body = JSON.parse(request.body.read)
+      begin
+        body = JSON.parse(request.body.read)
+      rescue StandardError => e
+        request_error = {
+          _error: ACE::Error.new(e.message,
+                                 'puppetlabs/ace/request_exception',
+                                 class: e.class, backtrace: e.backtrace)
+        }
+        return [400, request_error.to_json]
+      end
+
       error = validate_schema(@schemas["run_task"], body)
       return [400, error.to_json] unless error.nil?
 

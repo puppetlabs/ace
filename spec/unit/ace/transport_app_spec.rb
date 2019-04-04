@@ -111,6 +111,13 @@ RSpec.describe ACE::TransportApp do
       expect(last_response.status).to eq(400)
     end
 
+    it 'throws an ace/request_exception if the request is invalid JSON' do
+      post '/run_task', '{ foo }', 'CONTENT_TYPE' => 'text/json'
+
+      expect(last_response.body).to match(%r{puppetlabs\/ace\/request_exception})
+      expect(last_response.status).to eq(400)
+    end
+
     context 'when the task executes cleanly' do
       it 'runs returns the output' do
         post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
