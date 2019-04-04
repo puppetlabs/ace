@@ -20,14 +20,14 @@ RSpec.describe ACE::Config do
   let(:complete_config_keys) {
     ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
      'ssl-cipher-suites', 'loglevel', 'logfile', 'whitelist',
-     'concurrency', 'cache-dir', 'file-server-conn-timeout',
-     'file-server-uri', 'ssl-ca-crls']
+     'concurrency', 'cache-dir', 'puppet-server-conn-timeout',
+     'puppet-server-uri', 'ssl-ca-crls']
   }
 
   let(:complete_env_keys) {
     ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'loglevel',
-     'concurrency', 'file-server-conn-timeout',
-     'file-server-uri', 'ssl-ca-crls']
+     'concurrency', 'puppet-server-conn-timeout',
+     'puppet-server-uri', 'ssl-ca-crls']
   }
 
   let(:complete_ssl_keys) {
@@ -35,7 +35,7 @@ RSpec.describe ACE::Config do
   }
 
   let(:complete_required_keys) {
-    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'ssl-ca-crls', 'file-server-uri', 'cache-dir']
+    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'ssl-ca-crls', 'puppet-server-uri', 'cache-dir']
   }
 
   let(:complete_defaults) {
@@ -54,6 +54,7 @@ RSpec.describe ACE::Config do
       'port' => 44633,
       'concurrency' => 10,
       'cache-dir' => "/opt/puppetlabs/server/data/ace-server/cache",
+      'puppet-server-conn-timeout' => 120,
       'file-server-conn-timeout' => 120 }
   }
 
@@ -141,12 +142,12 @@ RSpec.describe ACE::Config do
       expect(config['concurrency']).to eq(23)
     end
 
-    it 'reads file-server-conn-timeout' do
-      expect(config['file-server-conn-timeout']).to eq(23)
+    it 'reads puppet-server-conn-timeout' do
+      expect(config['puppet-server-conn-timeout']).to eq(23)
     end
 
-    it 'reads file-server-uri' do
-      expect(config['file-server-uri']).to eq(fake_env_config)
+    it 'reads puppet-server-uri' do
+      expect(config['puppet-server-uri']).to eq(fake_env_config)
     end
   end
 
@@ -168,9 +169,20 @@ RSpec.describe ACE::Config do
     }.to raise_error(Bolt::ValidationError, "Configured 'concurrency' must be a positive integer")
   end
 
-  it "errors when file-server-conn-timeout is not an integer" do
+  it "errors when puppet-server-conn-timeout is not an integer" do
     expect {
-      described_class.new(base_config.merge('file-server-conn-timeout' => '120')).validate
-    }.to raise_error(Bolt::ValidationError, "Configured 'file-server-conn-timeout' must be a positive integer")
+      described_class.new(base_config.merge('puppet-server-conn-timeout' => '120')).validate
+    }.to raise_error(Bolt::ValidationError, "Configured 'puppet-server-conn-timeout' must be a positive integer")
+  end
+
+  it "contains compatible file-server keys for use with bolt" do
+    instance = described_class.new(base_config)
+    instance.make_compatible
+    config_data = instance.instance_variable_get(:@data)
+
+    expect(config_data).to be_key('file-server-uri')
+    expect(config_data['file-server-uri']).to eq(config_data['puppet-server-uri'])
+    expect(config_data).to be_key('file-server-conn-timeout')
+    expect(config_data['file-server-conn-timeout']).to eq(config_data['puppet-server-conn-timeout'])
   end
 end

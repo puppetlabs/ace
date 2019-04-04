@@ -7,11 +7,11 @@ module ACE
   class Config < BoltServer::BaseConfig
     attr_reader :data
     def config_keys
-      super + %w[concurrency cache-dir file-server-conn-timeout file-server-uri ssl-ca-crls]
+      super + %w[concurrency cache-dir puppet-server-conn-timeout puppet-server-uri ssl-ca-crls]
     end
 
     def env_keys
-      super + %w[concurrency file-server-conn-timeout file-server-uri ssl-ca-crls]
+      super + %w[concurrency puppet-server-conn-timeout puppet-server-uri ssl-ca-crls]
     end
 
     def ssl_keys
@@ -19,7 +19,7 @@ module ACE
     end
 
     def int_keys
-      %w[concurrency file-server-conn-timeout]
+      %w[concurrency puppet-server-conn-timeout]
     end
 
     def defaults
@@ -27,12 +27,13 @@ module ACE
         'port' => 44633,
         'concurrency' => 10,
         'cache-dir' => "/opt/puppetlabs/server/data/ace-server/cache",
+        'puppet-server-conn-timeout' => 120,
         'file-server-conn-timeout' => 120
       )
     end
 
     def required_keys
-      super + %w[file-server-uri cache-dir]
+      super + %w[puppet-server-uri cache-dir]
     end
 
     def service_name
@@ -58,9 +59,15 @@ module ACE
         raise Bolt::ValidationError, "Configured 'concurrency' must be a positive integer"
       end
 
-      unless natural?(@data['file-server-conn-timeout'])
-        raise Bolt::ValidationError, "Configured 'file-server-conn-timeout' must be a positive integer"
+      unless natural?(@data['puppet-server-conn-timeout'])
+        raise Bolt::ValidationError, "Configured 'puppet-server-conn-timeout' must be a positive integer"
       end
+    end
+
+    def make_compatible
+      # This function sets values used by Bolt that behave the same in ACE, but have a different meaning
+      @data['file-server-uri'] = @data['puppet-server-uri']
+      @data['file-server-conn-timeout'] = @data['puppet-server-conn-timeout']
     end
   end
 end

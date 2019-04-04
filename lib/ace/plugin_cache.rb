@@ -10,7 +10,7 @@ module ACE
     attr_reader :config, :cache_dir_mutex, :uri
     def initialize(config)
       @config = config
-      @uri = URI.parse(config['file-server-uri'])
+      @uri = URI.parse(config['puppet-server-uri'])
       @cache_dir_mutex = Concurrent::ReadWriteLock.new
     end
 
