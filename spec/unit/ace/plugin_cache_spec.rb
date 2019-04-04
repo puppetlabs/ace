@@ -46,10 +46,10 @@ RSpec.describe ACE::PluginCache do
     end
 
     describe '#with_synced_libdir' do
-      it 'isolates the call' do
-        allow(plugin_cache).to receive(:with_synced_libdir_core).and_return('sync_response')
+      it 'isolates the call and yields' do
+        allow(plugin_cache).to receive(:with_synced_libdir_core).and_yield
 
-        expect(plugin_cache.with_synced_libdir('param')).to eq 'sync_response'
+        expect { |b| plugin_cache.with_synced_libdir('param', &b) }.to yield_with_no_args
         expect(ACE::ForkUtil).to have_received(:isolate).ordered
         expect(plugin_cache).to have_received(:with_synced_libdir_core).with('param').ordered
       end

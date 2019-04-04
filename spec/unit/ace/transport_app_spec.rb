@@ -3,6 +3,7 @@
 require 'spec_helper'
 require 'ace/transport_app'
 require 'rack/test'
+require 'ace/config'
 
 RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
@@ -217,10 +218,7 @@ RSpec.describe ACE::TransportApp do
   ##################
   describe '/execute_catalog' do
     before {
-      allow(ACE::ForkUtil).to receive(:isolate).and_yield
-
-      allow(plugins).to receive(:with_synced_libdir).and_return('task_response')
-      allow(FileUtils).to receive(:remove_dir)
+      allow(plugins).to receive(:with_synced_libdir)
     }
 
     describe 'success' do
