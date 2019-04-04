@@ -87,6 +87,22 @@ RSpec.describe ACE::TransportApp do
     expect(last_response.status).to eq(200)
   end
 
+  describe '#trusted_facts' do
+    it 'correctly parses a valid fqdn' do
+      expect(described_class.trusted_facts('foo.domain.com')).to eq(authenticated: "remote",
+                                                                    certname: "foo.domain.com",
+                                                                    domain: "domain.com",
+                                                                    extensions: {},
+                                                                    hostname: "foo")
+    end
+    it 'correctly returns when cert does not contain a dot' do
+      expect(described_class.trusted_facts('foodomaincom')).to eq(authenticated: "remote",
+                                                                  certname: "foodomaincom",
+                                                                  extensions: {},
+                                                                  hostname: "foodomaincom")
+    end
+  end
+
   ################
   # Tasks Endpoint
   ################
