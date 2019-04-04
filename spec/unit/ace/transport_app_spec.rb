@@ -81,10 +81,12 @@ RSpec.describe ACE::TransportApp do
     allow(plugins).to receive(:setup).and_return(plugins)
   end
 
-  it 'responds ok' do
-    get '/'
-    expect(last_response).to be_ok
-    expect(last_response.status).to eq(200)
+  describe '/' do
+    it 'responds ok' do
+      get '/'
+      expect(last_response).to be_ok
+      expect(last_response.status).to eq(200)
+    end
   end
 
   ################

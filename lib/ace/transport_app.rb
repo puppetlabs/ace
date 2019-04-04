@@ -60,6 +60,19 @@ module ACE
       [200, 'OK']
     end
 
+    # :nocov:
+    if ENV['RACK_ENV'] == 'dev'
+      get '/admin/gc' do
+        GC.start
+        200
+      end
+    end
+
+    get '/admin/gc_stat' do
+      [200, GC.stat.to_json]
+    end
+    # :nocov:
+
     # run this with "curl -X POST http://0.0.0.0:44633/run_task -d '{}'"
     post '/run_task' do
       content_type :json
