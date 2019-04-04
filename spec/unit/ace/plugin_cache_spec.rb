@@ -1,0 +1,132 @@
+# frozen_string_literal: true
+
+require 'ace/plugin_cache'
+require 'webmock/rspec'
+require 'hocon'
+
+RSpec.describe ACE::PluginCache do
+  let(:plugin_cache) { described_class.new(base_config) }
+
+  let(:puppetserver_directory_path) { '/foo/' }
+  let(:fake_file_path) { 'fake_file.rb' }
+  let(:params) { '?checksum_type=md5&environment=production&ignore=.hg&links=follow&recurse=true&source_permissions=' }
+  let(:base_config) do
+    {
+      "ssl-cert" => "spec/fixtures/ssl/cert.pem",
+      "ssl-key" => "spec/fixtures/ssl/key.pem",
+      "ssl-ca-cert" => "spec/fixtures/ssl/ca.pem",
+      "ssl-ca-crls" => "spec/fixtures/ssl/crl.pem",
+      "file-server-uri" => "https://localhost:9999",
+      "cache-dir" => "/tmp/environments"
+    }
+  end
+
+  before do
+    allow(ACE::ForkUtil).to receive(:isolate).and_yield
+  end
+
+  context 'with a mock filesystem' do
+    before do
+      allow(FileUtils).to receive(:mkdir_p)
+      allow(FileUtils).to receive(:cp_r)
+      allow(FileUtils).to receive(:touch)
+      allow(FileUtils).to receive(:remove_dir)
+    end
+
+    describe '#ssl_context' do
+      it { expect(plugin_cache.ssl_context).to be_a(Puppet::SSL::SSLContext) }
+    end
+
+    describe '#setup' do
+      it { expect(plugin_cache.setup).to be_a(described_class) }
+      it "creates the cache-dir" do
+        plugin_cache.setup
+        expect(FileUtils).to have_received(:mkdir_p).with('/tmp/environments')
+      end
+    end
+
+    describe '#with_synced_libdir' do
+      it 'isolates the call' do
+        allow(plugin_cache).to receive(:with_synced_libdir_core).and_return('sync_response')
+
+        expect(plugin_cache.with_synced_libdir('param')).to eq 'sync_response'
+        expect(ACE::ForkUtil).to have_received(:isolate).ordered
+        expect(plugin_cache).to have_received(:with_synced_libdir_core).with('param').ordered
+      end
+    end
+  end
+
+  describe '#sync_core' do
+    # This example is a ugly tradeoff between more confidence in calling the
+    # Puppet::Configurer::PluginHandler.new.download_plugins methods and having
+    # simpler tests. Since we do not have good control or understanding of the
+    # Puppet API, we opt for the former.
+    it 'calls into the puppetserver to download plugins' do
+      stub_request(:get, "https://localhost:9999/puppet/v3/file_metadatas/pluginfacts#{params}use")
+        .to_return(
+          status: 200,
+          body: '[
+            {
+              "path":"/etc/puppetlabs/code/environments/production/modules",
+              "relative_path":".","links":"follow","owner":0,"group":0,"mode":493,
+              "checksum":{"type":"ctime",
+                "value":"{ctime}2019-03-28 10:53:51 +0000"},
+                "type":"directory","destination":null
+            }
+          ]', headers: { content_type: 'application/json' }
+        )
+      stub_request(:get, "https://localhost:9999/puppet/v3/file_metadata/pluginfacts")
+        .to_return(status: 200, body: '{
+          "message":"Not Found: Could not find file_metadata pluginfacts",
+          "issue_kind":"RESOURCE_NOT_FOUND"
+          }', headers: { content_type: 'application/json' })
+      stub_request(:get, "https://localhost:9999/puppet/v3/file_metadatas/plugins#{params}ignore")
+        .to_return(status: 200, body: "[
+         {
+           \"path\":\"#{puppetserver_directory_path}\",
+           \"relative_path\":\".\",\"links\":\"follow\",
+           \"owner\":999,\"group\":999,\"mode\":420,
+           \"checksum\":{\"type\":\"ctime\",
+           \"value\":\"{ctime}2019-03-28 10:53:51 +0000\"},\"type\":\"directory\",\"destination\":null
+         },
+         {
+           \"path\":\"#{puppetserver_directory_path}\",
+           \"relative_path\":\"#{fake_file_path}\",\"links\":\"follow\",
+           \"owner\":999,\"group\":999,\"mode\":420,
+           \"checksum\":{\"type\":\"md5\",
+           \"value\":\"{md5}acbd18db4cc2f85cedef654fccc4a4d8\"},\"type\":\"file\",\"destination\":null
+          }
+         ]", headers: { content_type: 'application/json' })
+      stub_request(:get, "https://localhost:9999/puppet/v3/file_metadata/plugins")
+        .to_return(status: 200, body: "{
+          \"path\":\"#{fake_file_path}\",
+          \"relative_path\":null,\"links\":\"follow\",
+          \"owner\":999,\"group\":999,\"mode\":420,
+          \"checksum\":{\"type\":\"md5\",
+          \"value\":\"{md5}acbd18db4cc2f85cedef654fccc4a4d8\"
+          },\"type\":\"file\",\"destination\":null}", headers: { content_type: 'application/json' })
+      stub_request(:get, "https://localhost:9999/puppet/v3/file_content/plugins/fake_file.rb?environment=production")
+        .to_return(status: 200, body: "foo", headers: {})
+
+      expect(ACE::ForkUtil).not_to have_received(:isolate)
+
+      result = plugin_cache.sync_core('production')
+      folder_size = Dir[File.join(result, '**', '*')].count { |file| File.file?(file) }
+      expect(folder_size).to eq 1
+      expect(result).to be_a(String)
+    end
+  end
+
+  describe '#with_synced_libdir_core' do
+    before do
+      allow(FileUtils).to receive(:remove_dir)
+    end
+
+    it 'calls remove_dir after yielding' do
+      allow(plugin_cache).to receive(:sync_core).with('production').and_return('/tmp/foo/blah/plugins')
+      expect(ACE::ForkUtil).not_to have_received(:isolate)
+      expect { |b| plugin_cache.with_synced_libdir_core('production', &b) }.to yield_with_no_args
+      expect(FileUtils).to have_received(:remove_dir).with('/tmp/foo/blah/plugins')
+    end
+  end
+end

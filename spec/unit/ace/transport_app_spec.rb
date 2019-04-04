@@ -8,18 +8,14 @@ RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
 
   def app
-    ACE::TransportApp.new
+    ACE::TransportApp.new(ACE::Config.new(cache_dir))
   end
 
-  before do
-    allow(Bolt::Executor).to receive(:new).and_return(executor)
-    allow(BoltServer::FileCache).to receive(:new).and_return(file_cache)
-    allow(file_cache).to receive(:setup)
-  end
-
+  let(:cache_dir) { { "cache-dir" => "/foo" } }
   let(:executor) { instance_double(Bolt::Executor, 'executor') }
   let(:file_cache) { instance_double(BoltServer::FileCache, 'file_cache') }
   let(:task_response) { instance_double(Bolt::ResultSet, 'task_response') }
+  let(:plugins) { instance_double(ACE::PluginCache, 'plugin_cache') }
   let(:response) { instance_double(Bolt::Result, 'response') }
 
   let(:status) do
@@ -75,6 +71,14 @@ RSpec.describe ACE::TransportApp do
       'username': 'user',
       'password': 'password'
     }
+  end
+
+  before do
+    allow(Bolt::Executor).to receive(:new).and_return(executor)
+    allow(BoltServer::FileCache).to receive(:new).and_return(file_cache)
+    allow(ACE::PluginCache).to receive(:new).and_return(plugins)
+    allow(file_cache).to receive(:setup)
+    allow(plugins).to receive(:setup).and_return(plugins)
   end
 
   it 'responds ok' do
@@ -212,6 +216,13 @@ RSpec.describe ACE::TransportApp do
   # Catalog Endpoint
   ##################
   describe '/execute_catalog' do
+    before {
+      allow(ACE::ForkUtil).to receive(:isolate).and_yield
+
+      allow(plugins).to receive(:with_synced_libdir).and_return('task_response')
+      allow(FileUtils).to receive(:remove_dir)
+    }
+
     describe 'success' do
       let(:certname) { 'fw.example.net' }
 
