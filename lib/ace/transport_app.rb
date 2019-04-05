@@ -47,7 +47,7 @@ module ACE
       schema_error = JSON::Validator.fully_validate(schema, body)
       if schema_error.any?
         ACE::Error.new("There was an error validating the request body.",
-                       'ace/schema-error',
+                       'puppetlabs/ace/schema-error',
                        schema_error)
       end
     end
@@ -104,7 +104,17 @@ module ACE
     post '/execute_catalog' do
       content_type :json
 
-      body = JSON.parse(request.body.read)
+      begin
+        body = JSON.parse(request.body.read)
+      rescue StandardError => e
+        request_error = {
+          _error: ACE::Error.new(e.message,
+                                 'puppetlabs/ace/request_exception',
+                                 class: e.class, backtrace: e.backtrace)
+        }
+        return [400, request_error.to_json]
+      end
+
       error = validate_schema(@schemas["execute_catalog"], body)
       return [400, error.to_json] unless error.nil?
 
