@@ -19,9 +19,9 @@ module ACE
       self
     end
 
-    def with_synced_libdir(environment)
+    def with_synced_libdir(environment, &block)
       ForkUtil.isolate do
-        with_synced_libdir_core(environment)
+        with_synced_libdir_core(environment, &block)
       end
     end
 
