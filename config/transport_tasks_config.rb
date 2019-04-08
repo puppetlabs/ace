@@ -18,6 +18,7 @@ config_path = ENV['ACE_CONF'] || '/etc/puppetlabs/ace-server/conf.d/ace-server.c
 config = ACE::Config.new
 config.load_file_config(config_path)
 config.load_env_config
+config.make_compatible
 config.validate
 
 Logging.logger[:root].add_appenders Logging.appenders.stderr(

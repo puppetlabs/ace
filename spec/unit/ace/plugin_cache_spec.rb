@@ -16,7 +16,7 @@ RSpec.describe ACE::PluginCache do
       "ssl-key" => "spec/fixtures/ssl/key.pem",
       "ssl-ca-cert" => "spec/fixtures/ssl/ca.pem",
       "ssl-ca-crls" => "spec/fixtures/ssl/crl.pem",
-      "file-server-uri" => "https://localhost:9999",
+      "puppet-server-uri" => "https://localhost:9999",
       "cache-dir" => "/tmp/environments"
     }
   end

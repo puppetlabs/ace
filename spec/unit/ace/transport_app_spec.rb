@@ -110,7 +110,14 @@ RSpec.describe ACE::TransportApp do
     it 'throws an ace/schema_error if the request is invalid' do
       post '/run_task', JSON.generate({}), 'CONTENT_TYPE' => 'text/json'
 
-      expect(last_response.body).to match(%r{ace\/schema-error})
+      expect(last_response.body).to match(%r{puppetlabs\/ace\/schema-error})
+      expect(last_response.status).to eq(400)
+    end
+
+    it 'throws an ace/request_exception if the request is invalid JSON' do
+      post '/run_task', '{ foo }', 'CONTENT_TYPE' => 'text/json'
+
+      expect(last_response.body).to match(%r{puppetlabs\/ace\/request_exception})
       expect(last_response.status).to eq(400)
     end
 
@@ -247,6 +254,15 @@ RSpec.describe ACE::TransportApp do
         result = JSON.parse(last_response.body)
         expect(result).to include('_error')
         expect(result['_error']['msg']).to eq('catalog compile failed')
+      end
+    end
+
+    describe 'bad request' do
+      it 'throws an ace/request_exception if the request is invalid JSON' do
+        post '/execute_catalog', '{ foo }', 'CONTENT_TYPE' => 'text/json'
+
+        expect(last_response.body).to match(%r{puppetlabs\/ace\/request_exception})
+        expect(last_response.status).to eq(400)
       end
     end
 
