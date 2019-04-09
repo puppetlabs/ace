@@ -2,6 +2,8 @@
 
 require 'ace/error'
 require 'ace/fork_util'
+require 'ace/puppet_util'
+require 'ace/configurer'
 require 'ace/plugin_cache'
 require 'bolt_server/file_cache'
 require 'bolt/executor'
@@ -21,7 +23,7 @@ module ACE
       tasks_cache_dir = File.join(@config['cache-dir'], 'tasks')
       @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir)).setup
       environments_cache_dir = File.join(@config['cache-dir'], 'environments')
-      @plugins = ACE::PluginCache.new(@config.data.merge('cache-dir' => environments_cache_dir)).setup
+      @plugins = ACE::PluginCache.new(environments_cache_dir).setup
 
       @schemas = {
         "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json'))),
@@ -30,6 +32,13 @@ module ACE
       shared_schema = JSON::Schema.new(JSON.parse(File.read(File.join(__dir__, 'schemas', 'task.json'))),
                                        Addressable::URI.parse("file:task"))
       JSON::Validator.add_schema(shared_schema)
+
+      ACE::PuppetUtil.init_global_settings(config['ssl-ca-cert'],
+                                           config['ssl-ca-crls'],
+                                           config['ssl-key'],
+                                           config['ssl-cert'],
+                                           config['cache-dir'],
+                                           URI.parse(config['puppet-server-uri']))
 
       super(nil)
     end
@@ -198,11 +207,22 @@ module ACE
       error = validate_schema(@schemas["execute_catalog"], body)
       return [400, error.to_json] unless error.nil?
 
-      @plugins.with_synced_libdir(body['compiler']['environment']) do
-        # get facts/trusted facts
-        #   trusted_facts = ACE::TransportApp.trusted_facts(body['compiler']['certname'])
-        # get catalog
-        # apply catalog
+      environment = body['compiler']['environment']
+      certname = body['compiler']['certname']
+
+      # TODO: (needs groomed) - proper error handling, errors within the block can be rescued
+      # and handled correctly, ACE::Errors we can handle similar to the task
+      # workflow, errors within the Configuer and not as pleasant - can have
+      # _some_ control over them, especially around status codes from
+      # the /v4/catalog endpoint
+      @plugins.with_synced_libdir(environment, certname) do
+        ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
+        configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
+        configurer.run(transport_name: certname,
+                       environment: environment,
+                       network_device: true,
+                       pluginsync: false,
+                       trusted_facts: ACE::TransportApp.trusted_facts(certname))
       end
 
       # simulate expected error cases

@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'ace/error'
+require 'ace/configurer'
 require 'ace/transport_app'
 require 'rack/test'
 require 'ace/config'
@@ -10,15 +11,21 @@ RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
 
   def app
-    ACE::TransportApp.new(ACE::Config.new(cache_dir))
+    ACE::TransportApp.new(ACE::Config.new(base_config))
   end
 
-  let(:cache_dir) { { "cache-dir" => "/foo" } }
+  let(:base_config) do
+    {
+      "puppet-server-uri" => "https://localhost:9999",
+      "cache-dir" => "/tmp/environments"
+    }
+  end
   let(:executor) { instance_double(Bolt::Executor, 'executor') }
   let(:file_cache) { instance_double(BoltServer::FileCache, 'file_cache') }
   let(:task_response) { instance_double(Bolt::ResultSet, 'task_response') }
   let(:plugins) { instance_double(ACE::PluginCache, 'plugin_cache') }
   let(:response) { instance_double(Bolt::Result, 'response') }
+  let(:configurer) { instance_double(ACE::Configurer, 'configurer') }
 
   let(:status) do
     {
@@ -81,6 +88,7 @@ RSpec.describe ACE::TransportApp do
     allow(ACE::PluginCache).to receive(:new).and_return(plugins)
     allow(file_cache).to receive(:setup)
     allow(plugins).to receive(:setup).and_return(plugins)
+    allow(ACE::PuppetUtil).to receive(:init_global_settings)
   end
 
   describe '/' do
@@ -244,7 +252,10 @@ RSpec.describe ACE::TransportApp do
   ##################
   describe '/execute_catalog' do
     before {
-      allow(plugins).to receive(:with_synced_libdir)
+      allow(plugins).to receive(:with_synced_libdir).and_yield
+      allow(described_class).to receive(:init_puppet_target)
+      allow(ACE::Configurer).to receive(:new).and_return(configurer)
+      allow(configurer).to receive(:run)
     }
 
     describe 'success' do
@@ -252,6 +263,8 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 200 with empty body when success' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+        expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
+        expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
@@ -265,6 +278,8 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 200 with error in body' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+        expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
+        expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
@@ -288,6 +303,8 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 200 with error in body' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+        expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
+        expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
@@ -302,6 +319,8 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 200 with error in body' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+        expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
+        expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
