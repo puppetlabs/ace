@@ -43,6 +43,15 @@ module ACE
       result
     end
 
+    def ssl_context
+      @ssl_context ||= Puppet::SSL::SSLProvider.new.create_context(
+        cacerts: [OpenSSL::X509::Certificate.new(File.read(@config['ssl-ca-cert']))],
+        crls: [OpenSSL::X509::CRL.new(File.read(@config['ssl-ca-crls']))],
+        private_key: OpenSSL::PKey::RSA.new(File.read(@config['ssl-key'])),
+        client_cert: OpenSSL::X509::Certificate.new(File.read(@config['ssl-cert']))
+      )
+    end
+
     def validate_schema(schema, body)
       schema_error = JSON::Validator.fully_validate(schema, body)
       if schema_error.any?
@@ -131,10 +140,18 @@ module ACE
       error = validate_schema(@schemas["execute_catalog"], body)
       return [400, error.to_json] unless error.nil?
 
-      @plugins.with_synced_libdir(body['compiler']['environment']) do
-        # get facts/trusted facts
-        # get catalog
-        # apply catalog
+      environment = body['compiler']['environment']
+      certname = body['compiler']['certname']
+
+      @plugins.with_synced_libdir(environment, certname) do
+        Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
+        pool = Puppet::Network::HTTP::NoCachePool.new
+        env = Puppet::Node::Environment.remote(environment)
+        Puppet.override(ssl_context: ssl_context, http_pool: pool, loaders: Puppet::Pops::Loaders.new(env), configured_environment: environment) do
+          ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
+          configurer = Puppet::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
+          configurer.run(:network_device => true, :pluginsync => false, :trusted_facts => ACE::TransportApp.trusted_facts(certname)
+        end
       end
 
       # simulate expected error cases

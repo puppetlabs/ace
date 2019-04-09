@@ -19,15 +19,18 @@ module ACE
       self
     end
 
-    def with_synced_libdir(environment, &block)
+    def with_synced_libdir(environment, certname, &block)
       ForkUtil.isolate do
-        with_synced_libdir_core(environment, &block)
+        with_synced_libdir_core(environment, certname, &block)
       end
     end
 
-    def with_synced_libdir_core(environment)
+    def with_synced_libdir_core(environment, certname)
       libdir = sync_core(environment)
       Puppet[:libdir] = libdir
+      Puppet[:certname] = certname
+      Puppet[:environment] = environment
+      $LOAD_PATH << libdir
       yield
     ensure
       FileUtils.remove_dir(libdir)
@@ -59,8 +62,8 @@ module ACE
       Puppet::Util::Log.newdestination(:console)
       Puppet.settings[:log_level] = 'notice'
       Puppet.settings[:trace] = true
-      Puppet.settings[:catalog_terminus] = :rest
-      Puppet.settings[:node_terminus] = :rest
+      Puppet.settings[:catalog_terminus] = :certless
+      Puppet.settings[:node_terminus] = :plain
       Puppet.settings[:catalog_cache_terminus] = :json
       Puppet.settings[:facts_terminus] = :network_device
     end
