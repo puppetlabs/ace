@@ -52,6 +52,24 @@ module ACE
       end
     end
 
+    # returns a hash of trusted facts that will be used
+    # to request a catalog for the target
+    def self.trusted_facts(certname)
+      # if the certname is a valid FQDN, it will split
+      # it in to the correct hostname.domain format
+      # otherwise hostname will be the certname and domain
+      # will be empty
+      hostname, domain = certname.split('.', 2)
+      trusted_facts = {
+        "authenticated": "remote",
+        "extensions": {},
+        "certname": certname,
+        "hostname": hostname
+      }
+      trusted_facts[:domain] = domain if domain
+      trusted_facts
+    end
+
     get "/" do
       200
     end
@@ -133,6 +151,7 @@ module ACE
 
       @plugins.with_synced_libdir(body['compiler']['environment']) do
         # get facts/trusted facts
+        #   trusted_facts = ACE::TransportApp.trusted_facts(body['compiler']['certname'])
         # get catalog
         # apply catalog
       end
