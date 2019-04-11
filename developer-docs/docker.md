@@ -34,9 +34,21 @@ Once the Puppetserver is ready, the following message is reported:
 2019-03-18 15:42:19,965 INFO  [p.s.l.legacy-routes-service] The legacy routing service has successfully started and is now ready to handle requests
 ```
 
+On Linux, ensure that you have access to all volumes:
+
+```
+sudo chmod a+rx -R volumes/
+```
+
 At this point it is required to generate certs for the `aceserver`, this can be achieved though:
 
 `docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0,puppet`
+
+On Linux, ensure that you have access to the newly created files:
+
+```
+sudo chmod a+rx -R volumes/
+```
 
 Reasoning for this is that it makes it easier to ensure that the cert names are consistent across environments.
 
@@ -52,12 +64,12 @@ Reasoning for this is that it makes it easier to ensure that the cert names are 
 https://0.0.0.0:8140/puppet/v3/tasks/:module/:task?environment=production
 ```
 
-Is the endpoint to get the task metadata from a PuppetServer, i.e. 
+Is the endpoint to get the task metadata from a PuppetServer, i.e.
 
 ```
 GET https://0.0.0.0:8140/puppet/v3/tasks/panos/apikey?environment=production
 
-RESPONSE 
+RESPONSE
 {
     "metadata": {
         "description": "Retrieve a PAN-OS apikey",
