@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require 'ace/error'
 require 'ace/transport_app'
 require 'rack/test'
 require 'ace/config'
@@ -309,5 +310,172 @@ RSpec.describe ACE::TransportApp do
         expect(result['_error']['msg']).to eq('report submission failed')
       end
     end
+  end
+
+  ##################
+  # init_puppet_target function
+  ##################
+  describe 'init_puppet_target' do
+    describe 'success with transport style connection info' do
+      device_raw = '{
+            "target": {
+                "remote-transport":"panos",
+                "host":"fw.example.net",
+                "user":"foo",
+                "password":"wibble"
+            },
+            "compiler": {
+                "certname":"fw.example.net",
+                "environment":"development",
+                "transaction_uuid":"<uuid string>",
+                "job_id":"<id string>"
+            }
+        }'
+      device_json = JSON.parse(device_raw)
+      test_hash = Hash[device_json['target'].map { |(k, v)| [k.to_sym, v] }]
+      test_hash.delete(:"remote-transport")
+      # Our actual function inits a device, mocking this out with a simple return string for the purposes of test
+      it 'returns correct device' do
+        allow(Puppet::Util::NetworkDevice).to receive(:init) do |params|
+          expect(params[:provider]).to eq(device_json['target']['remote-transport'])
+          expect(params[:url]).to eq(test_hash)
+          expect(params[:name]).to eq(device_json['compiler']['certname'])
+          expect(params[:options]).to eql({})
+          'panos_device'
+        end
+
+        expect(described_class.init_puppet_target(device_json['compiler']['certname'],
+                                                  device_json['target']['remote-transport'],
+                                                  device_json['target'])).to match(/(panos_device)/)
+      end
+    end
+
+    describe 'success with legacy style uri' do
+      device_raw = '{
+          "target":{
+            "remote-transport":"f5",
+            "uri":"https://foo:wibble@f5.example.net/"
+          },
+          "compiler":{
+            "certname":"f5.example.net",
+            "environment":"development",
+            "transaction_uuid":"<uuid string>",
+            "job_id":"<id string>"
+          }
+        }'
+      device_json = JSON.parse(device_raw)
+      # Our actual function inits a device, mocking this out with a simple return string for the purposes of test
+      it 'returns correct device' do
+        allow(Puppet::Util::NetworkDevice).to receive(:init) do |params|
+          expect(params[:provider]).to eq(device_json['target']['remote-transport'])
+          expect(params[:url]).to eq(device_json['target']['uri'])
+          expect(params[:name]).to eq(device_json['compiler']['certname'])
+          expect(params[:options]).to eql({})
+          'f5_device'
+        end
+
+        expect(described_class.init_puppet_target(device_json['compiler']['certname'],
+                                                  device_json['target']['remote-transport'],
+                                                  device_json['target'])).to match(/(f5_device)/)
+      end
+    end
+    # rubocop:disable RSpec/MessageSpies
+
+    describe 'raise error when invalid uri supplied' do
+      device_raw = '{
+          "target":{
+            "remote-transport":"f5",
+            "uri":"£$ %^%£$@ ^£@£"
+          },
+          "compiler":{
+            "certname":"f5.example.net",
+            "environment":"development",
+            "transaction_uuid":"<uuid string>",
+            "job_id":"<id string>"
+          }
+        }'
+      device_json = JSON.parse(device_raw)
+      it 'throws error and returns nil device' do
+        expect(Puppet::Util::NetworkDevice).not_to receive(:init)
+
+        expect {
+          described_class.init_puppet_target(device_json['compiler']['certname'],
+                                             device_json['target']['remote-transport'],
+                                             device_json['target'])
+        } .to raise_error ACE::Error, /There was an error parsing the URI of the Puppet target/
+      end
+    end
+
+    describe 'raise error when json supplied does not contain target' do
+      device_raw = '{
+          "compiler":{
+            "certname":"f5.example.net",
+            "environment":"development",
+            "transaction_uuid":"<uuid string>",
+            "job_id":"<id string>"
+          }
+        }'
+      device_json = JSON.parse(device_raw)
+      it 'throws error and returns nil device' do
+        expect(Puppet::Util::NetworkDevice).not_to receive(:init)
+
+        expect {
+          described_class.init_puppet_target(device_json['compiler']['certname'],
+                                             'cisco_ios',
+                                             nil)
+        } .to raise_error ACE::Error, /There was an error parsing the Puppet target. 'target' not found/
+      end
+    end
+
+    describe 'raise error when json supplied does not contain compiler certname' do
+      device_raw = '{
+          "target": {
+                "remote-transport":"panos",
+                "host":"fw.example.net",
+                "user":"foo",
+                "password":"wibble"
+          },
+          "compiler": {
+            "environment":"development",
+            "transaction_uuid":"<uuid string>",
+            "job_id":"<id string>"
+          }
+        }'
+      device_json = JSON.parse(device_raw)
+      it 'throws error and returns nil device' do
+        expect(Puppet::Util::NetworkDevice).not_to receive(:init)
+
+        expect {
+          described_class.init_puppet_target(nil,
+                                             device_json['target']['remote-transport'],
+                                             device_json['target'])
+        } .to raise_error ACE::Error, /There was an error parsing the Puppet compiler details. 'certname' not found/
+      end
+    end
+
+    describe 'raise error when json supplied does not contain remote-transport' do
+      device_raw = '{
+          "target":{
+            "uri":"https://foo:wibble@f5.example.com"
+          },
+          "compiler": {
+            "certname":"f5.example.net",
+            "environment":"development",
+            "transaction_uuid":"<uuid string>",
+            "job_id":"<id string>"
+          }
+        }'
+      device_json = JSON.parse(device_raw)
+      it 'throws error and returns nil device' do
+        expect(Puppet::Util::NetworkDevice).not_to receive(:init)
+
+        expect {
+          described_class.init_puppet_target(device_json['compiler']['certname'],
+                                             nil,
+                                             device_json['target'])
+        } .to raise_error ACE::Error, /There was an error parsing the Puppet target. 'transport' not found/
+      end
+    end
+    # rubocop:enable RSpec/MessageSpies
   end
 end
