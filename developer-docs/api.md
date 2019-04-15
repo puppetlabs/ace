@@ -1,7 +1,7 @@
 # ACE API
 
 ## Overview
-ACE provides 2 APIs to enable the execution or Tasks and Catalog compilation for a remote target.
+ACE provides 2 APIs to enable the execution of Tasks and Catalog compilation for a remote target.
 
 ## API Endpoints
 Each API endpoint accepts a request as described below. The request body must be a JSON object.
@@ -70,7 +70,7 @@ For example, the following will compile and execute a catalog on fw.example.net:
 }
 ```
 
-For pre-Transport devices (currently F5), a uri can be sent:
+For pre-Transport devices (like F5), a uri can be sent:
 
 ```
 {
@@ -119,10 +119,10 @@ From your checkout of ACE start the docker-compose to run ACE
 docker-compose up -d --build
 ```
 
-You can now make a curl request to ACE which should respond with 'OK'
+You can now make a curl request to ACE, which should respond with 'OK':
 
 ```
-run this with "curl -X POST http://0.0.0.0:44633/check
+curl -X POST http://0.0.0.0:44633/check
 ```
 
 ## Running from source
@@ -133,7 +133,7 @@ From your checkout of ACE run
 bundle exec puma -p 44633 -C puma_config.rb
 ```
 
-You can now make a curl request to bolt which should respond with 'OK'
+You can now make a curl request to ACE, which should respond with 'OK':
 ```
-run this with "curl -X POST http://0.0.0.0:44633/check
+curl -X POST http://0.0.0.0:44633/check
 ```
