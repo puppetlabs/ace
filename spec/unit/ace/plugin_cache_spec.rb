@@ -1,25 +1,16 @@
 # frozen_string_literal: true
 
 require 'ace/plugin_cache'
+require 'ace/puppet_util'
 require 'webmock/rspec'
 require 'hocon'
 
 RSpec.describe ACE::PluginCache do
-  let(:plugin_cache) { described_class.new(base_config) }
+  let(:plugin_cache) { described_class.new('/tmp/environments') }
 
   let(:puppetserver_directory_path) { '/foo/' }
   let(:fake_file_path) { 'fake_file.rb' }
   let(:params) { '?checksum_type=md5&environment=production&ignore=.hg&links=follow&recurse=true&source_permissions=' }
-  let(:base_config) do
-    {
-      "ssl-cert" => "spec/fixtures/ssl/cert.pem",
-      "ssl-key" => "spec/fixtures/ssl/key.pem",
-      "ssl-ca-cert" => "spec/fixtures/ssl/ca.pem",
-      "ssl-ca-crls" => "spec/fixtures/ssl/crl.pem",
-      "puppet-server-uri" => "https://localhost:9999",
-      "cache-dir" => "/tmp/environments"
-    }
-  end
 
   before do
     allow(ACE::ForkUtil).to receive(:isolate).and_yield
@@ -31,10 +22,7 @@ RSpec.describe ACE::PluginCache do
       allow(FileUtils).to receive(:cp_r)
       allow(FileUtils).to receive(:touch)
       allow(FileUtils).to receive(:remove_dir)
-    end
-
-    describe '#ssl_context' do
-      it { expect(plugin_cache.ssl_context).to be_a(Puppet::SSL::SSLContext) }
+      allow(ACE::PuppetUtil).to receive(:isolated_puppet_settings)
     end
 
     describe '#setup' do
@@ -49,18 +37,36 @@ RSpec.describe ACE::PluginCache do
       it 'isolates the call and yields' do
         allow(plugin_cache).to receive(:with_synced_libdir_core).and_yield
 
-        expect { |b| plugin_cache.with_synced_libdir('param', &b) }.to yield_with_no_args
+        expect { |b| plugin_cache.with_synced_libdir('environment', 'certname', &b) }.to yield_with_no_args
         expect(ACE::ForkUtil).to have_received(:isolate).ordered
-        expect(plugin_cache).to have_received(:with_synced_libdir_core).with('param').ordered
+        expect(plugin_cache).to have_received(:with_synced_libdir_core).with('environment').ordered
       end
     end
   end
 
   describe '#sync_core' do
+    # work around for executing a semi realistic pluginsync
+    # the ca, crls, keys and certs are just used to pass parsing
+    # that occurs in puppet
+    before do
+      allow(Puppet::Pops::Loaders).to receive(:new)
+      ACE::PuppetUtil.init_global_settings('spec/fixtures/ssl/ca.pem',
+                                           'spec/fixtures/ssl/crl.pem',
+                                           'spec/fixtures/ssl/key.pem',
+                                           'spec/fixtures/ssl/cert.pem',
+                                           '/tmp/environments',
+                                           URI.parse('https://localhost:9999'))
+      ACE::PuppetUtil.isolated_puppet_settings('foo', 'production')
+      pool = Puppet::Network::HTTP::NoCachePool.new
+      Puppet.push_context({
+                            http_pool: pool
+                          }, "Isolated HTTP Pool")
+    end
     # This example is a ugly tradeoff between more confidence in calling the
     # Puppet::Configurer::PluginHandler.new.download_plugins methods and having
     # simpler tests. Since we do not have good control or understanding of the
     # Puppet API, we opt for the former.
+
     it 'calls into the puppetserver to download plugins' do
       stub_request(:get, "https://localhost:9999/puppet/v3/file_metadatas/pluginfacts#{params}use")
         .to_return(

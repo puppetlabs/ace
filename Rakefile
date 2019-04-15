@@ -13,7 +13,9 @@ task default: %i[rubocop spec license_finder]
 #### RSPEC ####
 require 'rspec/core/rake_task'
 
-RSpec::Core::RakeTask.new(:spec)
+RSpec::Core::RakeTask.new(:spec) do |t|
+  t.exclude_pattern = 'spec/acceptance/**/*_spec.rb'
+end
 
 namespace :spec do
   desc 'Run RSpec code examples with coverage collection'
