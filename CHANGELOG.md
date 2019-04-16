@@ -3,6 +3,17 @@
 All significant changes to this repo will be summarized in this file.
 
 
+## [v0.9.1](https://github.com/puppetlabs/ace/tree/v0.9.1) (2019-04-16)
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v0.9.0...v0.9.1)
+
+**Fixed bugs:**
+
+- \(maint\) remove load\_config parameter [\#34](https://github.com/puppetlabs/ace/pull/34) ([da-ar](https://github.com/da-ar))
+
+**Merged pull requests:**
+
+- \(FM-7927\) Docs review [\#35](https://github.com/puppetlabs/ace/pull/35) ([clairecadman](https://github.com/clairecadman))
+
 ## [v0.9.0](https://github.com/puppetlabs/ace/tree/v0.9.0) (2019-04-16)
 **Implemented enhancements:**
 
