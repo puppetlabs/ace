@@ -83,7 +83,7 @@ RSpec.describe ACE::TransportApp do
   end
 
   before do
-    allow(Bolt::Executor).to receive(:new).and_return(executor)
+    allow(Bolt::Executor).to receive(:new).with(0).and_return(executor)
     allow(BoltServer::FileCache).to receive(:new).and_return(file_cache)
     allow(ACE::PluginCache).to receive(:new).and_return(plugins)
     allow(file_cache).to receive(:setup)
