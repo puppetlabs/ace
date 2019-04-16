@@ -2,7 +2,6 @@
 
 require "bundler/gem_tasks"
 require 'rubocop/rake_task'
-require 'ace/version'
 
 RuboCop::RakeTask.new(:rubocop) do |t|
   t.options = ['--display-cop-names']
@@ -37,7 +36,7 @@ end
 begin
   require 'github_changelog_generator/task'
   GitHubChangelogGenerator::RakeTask.new :changelog do |config|
-    require 'puppet/ace/version'
+    require 'ace/version'
     config.future_release = "v#{ACE::VERSION}"
     config.header = "# Changelog\n\n" \
       "All significant changes to this repo will be summarized in this file.\n"
