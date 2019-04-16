@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'openssl'
+
 module ACE
   class PuppetUtil
     def self.init_global_settings(ca_cert_path, ca_crls_path, private_key_path, client_cert_path, cachedir, uri)
@@ -23,11 +25,15 @@ module ACE
       Puppet.settings[:plugindest] = File.join(cachedir, 'plugins')
       Puppet.push_context(Puppet.base_context(Puppet.settings), "Puppet Initialization")
       # ssl_context will be a persistent context
+      cert_provider = Puppet::X509::CertProvider.new(
+        capath: ca_cert_path,
+        crlpath: ca_crls_path
+      )
       ssl_context = Puppet::SSL::SSLProvider.new.create_context(
-        cacerts: [OpenSSL::X509::Certificate.new(File.read(ca_cert_path))],
-        crls: [OpenSSL::X509::CRL.new(File.read(ca_crls_path))],
-        private_key: OpenSSL::PKey::RSA.new(File.read(private_key_path)),
-        client_cert: OpenSSL::X509::Certificate.new(File.read(client_cert_path))
+        cacerts: cert_provider.load_cacerts(required: true),
+        crls: cert_provider.load_crls(required: true),
+        private_key: OpenSSL::PKey::RSA.new(File.read(private_key_path, encoding: 'utf-8')),
+        client_cert: OpenSSL::X509::Certificate.new(File.read(client_cert_path, encoding: 'utf-8'))
       )
       Puppet.push_context({
                             ssl_context: ssl_context,
