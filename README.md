@@ -2,7 +2,7 @@
 
 ## Installation
 
-The Agentless Catalog Executor (ACE) is installed as pe-ace-server as part of Puppet Enterprise (PE).
+The Agentless Catalog Executor (ACE) is built-in to Puppet Enterprise (PE) as pe-ace-server.
 
 ## Usage
 
