@@ -36,6 +36,14 @@ RSpec.describe ACE::ForkUtil do
         }.to raise_error(RuntimeError, /NaN not allowed in JSON/)
       end
 
+      it 'ACE exception thrown when the block raises an ACE error' do
+        expect {
+          described_class.isolate do
+            raise ACE::Error.new('my message', 'demo/demo')
+          end
+        }.to raise_error(ACE::Error, /my message/)
+      end
+
       it 'invalid JSON is correctly returned as a string' do
         return_value = described_class.isolate do
           '1. 2. 3. [. "test" : 123. ]'

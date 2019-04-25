@@ -2,6 +2,8 @@
 
 # English module required for $CHILD_STATUS rather than $?
 require 'English'
+require 'json'
+require 'ace/error'
 
 module ACE
   class ForkUtil
@@ -15,8 +17,25 @@ module ACE
         begin
           response = yield
           writer.puts JSON.generate(response)
+        rescue ACE::Error => e
+          writer.puts({
+            msg: e.message,
+            kind: e.kind,
+            details: {
+              class: e.class,
+              backtrace: e.backtrace
+            }
+          }.to_json)
+          success = false
         rescue StandardError => e
-          writer.puts(e)
+          writer.puts({
+            msg: e.message,
+            kind: e.class,
+            details: {
+              class: e.class,
+              backtrace: e.backtrace
+            }
+          }.to_json)
           success = false
         ensure
           Process.exit! success
@@ -30,7 +49,8 @@ module ACE
       output = reader.read
       Process.wait(pid)
       if $CHILD_STATUS != 0
-        raise output
+        error = JSON.parse(output)
+        raise ACE::Error.new(error['msg'], error['kind'], error['details'])
       else
         JSON.parse(output)
       end
