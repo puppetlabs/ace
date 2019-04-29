@@ -13,6 +13,7 @@ module ACE
     def self.isolate
       reader, writer = IO.pipe
       pid = fork {
+        # :nocov:
         success = true
         begin
           response = yield
@@ -40,9 +41,10 @@ module ACE
         ensure
           Process.exit! success
         end
+        # :nocov:
       }
       unless pid
-        log "Could not fork"
+        warn "Could not fork"
         exit 1
       end
       writer.close

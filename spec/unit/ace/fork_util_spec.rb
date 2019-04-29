@@ -65,5 +65,15 @@ RSpec.describe ACE::ForkUtil do
         expect(return_value).to be_nil
       end
     end
+
+    describe "fork failures" do
+      before do
+        allow(described_class).to receive(:fork).and_return(nil)
+      end
+
+      it "exits the process" do
+        expect { described_class.isolate {} }.to raise_error SystemExit
+      end
+    end
   end
 end
