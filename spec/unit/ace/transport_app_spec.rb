@@ -251,6 +251,8 @@ RSpec.describe ACE::TransportApp do
   # Catalog Endpoint
   ##################
   describe '/execute_catalog' do
+    let(:certname) { 'fw.example.net' }
+
     before {
       allow(plugins).to receive(:with_synced_libdir).and_yield
       allow(described_class).to receive(:init_puppet_target)
@@ -259,9 +261,7 @@ RSpec.describe ACE::TransportApp do
     }
 
     describe 'success' do
-      let(:certname) { 'fw.example.net' }
-
-      it 'returns 200 with empty body when success' do
+      it 'returns 200 with success' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
         expect(configurer).to have_received(:run)
@@ -269,64 +269,110 @@ RSpec.describe ACE::TransportApp do
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
-        expect(result).to eq({})
+        expect(result).to eq('certname' => certname, 'status' => 'report_generated',
+                             'result' => { 'job_id' => '<id string>', 'transaction_uuid' => '<uuid string>' })
       end
     end
 
-    describe 'catalog compile failed' do
-      let(:certname) { 'fail.example.net' }
+    context 'when the schema is invalid' do
+      let(:execute_catalog_body) do
+        {
+          "target": {
+            "remote-transport": "panos",
+            "host": "fw.example.net",
+            "user": "foo",
+            "password": "wibble"
+          },
+          "compiler": {
+            "certname": certname,
+            "transaction_uuid": "<uuid string>",
+            "job_id": "<id string>"
+          }
+        }
+      end
 
-      it 'returns 200 with error in body' do
+      it 'returns 400 with _error' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
-        expect(configurer).to have_received(:run)
-        expect(last_response.errors).to match(/\A\Z/)
-        expect(last_response).to be_ok
-        expect(last_response.status).to eq(200)
-        result = JSON.parse(last_response.body)
-        expect(result).to include('_error')
-        expect(result['_error']['msg']).to eq('catalog compile failed')
-      end
-    end
-
-    describe 'bad request' do
-      it 'throws an ace/request_exception if the request is invalid JSON' do
-        post '/execute_catalog', '{ foo }', 'CONTENT_TYPE' => 'text/json'
-
-        expect(last_response.body).to match(%r{puppetlabs\/ace\/request_exception})
         expect(last_response.status).to eq(400)
+        result = JSON.parse(last_response.body)
+        expect(result['status']).to eq('failure')
+        expect(result['result']['_error']['msg']).to eq('There was an error validating the request body.')
+        expect(result['result']['_error']['kind']).to eq('puppetlabs/ace/schema-error')
+        expect(result['result']['_error']['details']['schema_error']).to match(
+          %r{The property '#/compiler' did not contain a required property of 'environment' in schema}
+        )
       end
     end
 
-    describe 'target specification invalid' do
-      let(:certname) { 'credentials.example.net' }
+    context 'when the JSON is badly formatted' do
+      let(:bad_json) {
+        '{
+          "target":{
+            "remote-transport":"panos"
+            "host":"12345.delivery.puppetlabs.net"
+            "user":"admin"
+            "password":"admin"
+          },
+          "compiler":{
+            "certname":"12345.delivery.puppetlabs.net"
+            "environment":"production"
+            "transaction_uuid":"981687ce-520e-11e9-8647-d663bd873d93"
+            "job_id":"1"
+          }
+        }'
+      }
 
-      it 'returns 200 with error in body' do
-        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+      it 'returns 400 with _error' do
+        post '/execute_catalog', bad_json, 'CONTENT_TYPE' => 'text/json'
         expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
-        expect(configurer).to have_received(:run)
-        expect(last_response.errors).to match(/\A\Z/)
-        expect(last_response).to be_ok
-        expect(last_response.status).to eq(200)
+        expect(last_response.status).to eq(400)
         result = JSON.parse(last_response.body)
-        expect(result).to include('_error')
-        expect(result['_error']['msg']).to eq('target specification invalid')
+        expect(result['status']).to eq('failure')
+        expect(result['result']['_error']['msg']).to match(/unexpected token at/)
+        expect(result['result']['_error']['kind']).to eq('puppetlabs/ace/request_exception')
+        expect(result['result']['_error']['details']['class']).to eq('JSON::ParserError')
+        expect(result['result']['_error']['details']).to be_key('backtrace')
       end
     end
 
-    describe 'report submission failed' do
-      let(:certname) { 'reports.example.net' }
+    context 'when the error is an ACE error' do
+      let(:error) { ACE::Error.new("something", "something/darkside") }
 
-      it 'returns 200 with error in body' do
+      before {
+        allow(ACE::Configurer).to receive(:new).and_raise(error)
+      }
+
+      it 'returns 400 with _error' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
-        expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
-        expect(last_response).to be_ok
-        expect(last_response.status).to eq(200)
+        expect(last_response.status).to eq(400)
         result = JSON.parse(last_response.body)
-        expect(result).to include('_error')
-        expect(result['_error']['msg']).to eq('report submission failed')
+        expect(result).to eq('certname' => 'fw.example.net', 'status' => 'failure',
+                             'result' => { '_error' => { 'msg' => 'something',
+                                                         'kind' => 'something/darkside', 'details' => {} } })
+      end
+    end
+
+    context 'when the error is an unknown error' do
+      let(:error) { RuntimeError.new("unknown error") }
+
+      before {
+        allow(ACE::Configurer).to receive(:new).and_raise(error)
+      }
+
+      it 'returns 500 with _error' do
+        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+        expect { |b| plugins.with_synced_libdir('development', certname, &b) }.to yield_with_no_args
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response.status).to eq(500)
+        result = JSON.parse(last_response.body)
+        expect(result['status']).to eq('failure')
+        expect(result['result']['_error']['msg']).to eq('unknown error')
+        expect(result['result']['_error']['kind']).to eq('puppetlabs/ace/processing_exception')
+        expect(result['result']['_error']['details']['class']).to eq('RuntimeError')
+        expect(result['result']['_error']['details']).to be_key('backtrace')
       end
     end
   end

@@ -104,9 +104,9 @@ module ACE
     def validate_schema(schema, body)
       schema_error = JSON::Validator.fully_validate(schema, body)
       if schema_error.any?
-        ACE::Error.new("There was an error validating the request body.",
-                       'puppetlabs/ace/schema-error',
-                       schema_error)
+        raise ACE::Error.new("There was an error validating the request body.",
+                             'puppetlabs/ace/schema-error',
+                             schema_error: schema_error.first)
       end
     end
 
@@ -155,17 +155,18 @@ module ACE
 
       begin
         body = JSON.parse(request.body.read)
+        validate_schema(@schemas["run_task"], body)
+      rescue ACE::Error => e
+        request_error = { _error: e.to_h }
+        return [400, request_error.to_json]
       rescue StandardError => e
         request_error = {
-          _error: ACE::Error.new(e.message,
-                                 'puppetlabs/ace/request_exception',
-                                 class: e.class, backtrace: e.backtrace)
+          _error: ACE::Error.to_h(e.message,
+                                  'puppetlabs/ace/request_exception',
+                                  class: e.class, backtrace: e.backtrace)
         }
         return [400, request_error.to_json]
       end
-
-      error = validate_schema(@schemas["run_task"], body)
-      return [400, error.to_json] unless error.nil?
 
       opts = body['target'].merge('protocol' => 'remote')
 
@@ -195,57 +196,72 @@ module ACE
 
       begin
         body = JSON.parse(request.body.read)
+        validate_schema(@schemas["execute_catalog"], body)
+
+        environment = body['compiler']['environment']
+        certname = body['compiler']['certname']
+        trans_id = body['compiler']['transaction_uuid']
+        job_id = body['compiler']['job_id']
+      rescue ACE::Error => e
+        request_error = {
+          status: 'failure',
+          result: {
+            _error: e.to_h
+          }
+        }
+        return [400, request_error.to_json]
       rescue StandardError => e
         request_error = {
-          _error: ACE::Error.new(e.message,
-                                 'puppetlabs/ace/request_exception',
-                                 class: e.class, backtrace: e.backtrace)
+          status: 'failure',
+          result: {
+            _error: ACE::Error.to_h(e.message,
+                                    'puppetlabs/ace/request_exception',
+                                    class: e.class, backtrace: e.backtrace)
+          }
         }
         return [400, request_error.to_json]
       end
 
-      error = validate_schema(@schemas["execute_catalog"], body)
-      return [400, error.to_json] unless error.nil?
-
-      environment = body['compiler']['environment']
-      certname = body['compiler']['certname']
-
-      # TODO: (needs groomed) - proper error handling, errors within the block can be rescued
-      # and handled correctly, ACE::Errors we can handle similar to the task
-      # workflow, errors within the Configuer and not as pleasant - can have
-      # _some_ control over them, especially around status codes from
-      # the /v4/catalog endpoint
-      @plugins.with_synced_libdir(environment, certname) do
-        ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
-        configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
-        configurer.run(transport_name: certname,
-                       environment: environment,
-                       network_device: true,
-                       pluginsync: false,
-                       trusted_facts: ACE::TransportApp.trusted_facts(certname))
-      end
-
-      # simulate expected error cases
-      if body['compiler']['certname'] == 'fail.example.net'
-        [200, { _error: {
-          msg: 'catalog compile failed',
-          kind: 'puppetlabs/ace/compile_failed',
-          details: 'upstream api errors go here'
-        } }.to_json]
-      elsif body['compiler']['certname'] == 'credentials.example.net'
-        [200, { _error: {
-          msg: 'target specification invalid',
-          kind: 'puppetlabs/ace/target_spec',
-          details: 'upstream api errors go here'
-        } }.to_json]
-      elsif body['compiler']['certname'] == 'reports.example.net'
-        [200, { _error: {
-          msg: 'report submission failed',
-          kind: 'puppetlabs/ace/reporting_failed',
-          details: 'upstream api errors go here'
-        } }.to_json]
+      begin
+        @plugins.with_synced_libdir(environment, certname) do
+          ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
+          configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
+          configurer.run(transport_name: certname,
+                         environment: environment,
+                         network_device: true,
+                         pluginsync: false,
+                         trusted_facts: ACE::TransportApp.trusted_facts(certname))
+        end
+      rescue ACE::Error => e
+        process_error = {
+          certname: certname,
+          status: 'failure',
+          result: {
+            _error: e.to_h
+          }
+        }
+        return [400, process_error.to_json]
+      rescue StandardError => e
+        process_error = {
+          certname: certname,
+          status: 'failure',
+          result: {
+            _error: ACE::Error.to_h(e.message,
+                                    'puppetlabs/ace/processing_exception',
+                                    class: e.class, backtrace: e.backtrace).to_h
+          }
+        }
+        return [500, process_error.to_json]
       else
-        [200, '{}']
+        result = {
+          certname: certname,
+          status: 'report_generated',
+          result: {
+            transaction_uuid: trans_id,
+            job_id: job_id
+          }
+        }
+        [200, result.to_json]
       end
     end
   end
