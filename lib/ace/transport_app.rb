@@ -161,9 +161,9 @@ module ACE
         return [400, request_error.to_json]
       rescue StandardError => e
         request_error = {
-          _error: ACE::Error.new(e.message,
-                                 'puppetlabs/ace/request_exception',
-                                 class: e.class, backtrace: e.backtrace)
+          _error: ACE::Error.to_h(e.message,
+                                  'puppetlabs/ace/request_exception',
+                                  class: e.class, backtrace: e.backtrace)
         }
         return [400, request_error.to_json]
       end
@@ -214,9 +214,9 @@ module ACE
         request_error = {
           status: 'failure',
           result: {
-            _error: ACE::Error.new(e.message,
-                                   'puppetlabs/ace/request_exception',
-                                   class: e.class, backtrace: e.backtrace)
+            _error: ACE::Error.to_h(e.message,
+                                    'puppetlabs/ace/request_exception',
+                                    class: e.class, backtrace: e.backtrace)
           }
         }
         return [400, request_error.to_json]
@@ -246,21 +246,22 @@ module ACE
           certname: certname,
           status: 'failure',
           result: {
-            _error: ACE::Error.new(e.message,
-                                   'puppetlabs/ace/processing_exception',
-                                   class: e.class, backtrace: e.backtrace)
+            _error: ACE::Error.to_h(e.message,
+                                    'puppetlabs/ace/processing_exception',
+                                    class: e.class, backtrace: e.backtrace).to_h
           }
         }
         return [500, process_error.to_json]
       else
-        [200, {
+        result = {
           certname: certname,
           status: 'report_generated',
           result: {
             transaction_uuid: trans_id,
             job_id: job_id
           }
-        }.to_json]
+        }
+        [200, result.to_json]
       end
     end
   end
