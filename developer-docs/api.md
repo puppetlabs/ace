@@ -110,30 +110,6 @@ The `compiler` is a JSON object which contains parameters regarding the compilat
 This is a copy of [bolt's task object](https://github.com/puppetlabs/bolt/blob/master/developer-docs/bolt-api-servers.md#task-object)
 
 
-## Running ACE in a container
-*Recommended*
+## Running ACE
 
-From your checkout of ACE start the docker-compose to run ACE
-
-```
-docker-compose up -d --build
-```
-
-You can now make a curl request to ACE, which should respond with 'OK':
-
-```
-curl -X POST http://0.0.0.0:44633/check
-```
-
-## Running from source
-
-From your checkout of ACE run
-
-```
-bundle exec puma -p 44633 -C puma_config.rb
-```
-
-You can now make a curl request to ACE, which should respond with 'OK':
-```
-curl -X POST http://0.0.0.0:44633/check
-```
+See the [docker](docker.md) docs on how to run ACE for development.
