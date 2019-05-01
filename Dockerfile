@@ -1,5 +1,5 @@
 # Install gems
-FROM alpine:3.8 as build
+FROM puppet/puppet-agent-alpine:6.4.2 as build
 
 RUN \
 apk --no-cache add build-base ruby-dev ruby-bundler ruby-json ruby-bigdecimal git openssl-dev && \
@@ -12,11 +12,6 @@ ADD . /ace
 WORKDIR /ace
 RUN rm Gemfile.lock
 RUN bundle install --no-cache --path vendor/bundle
-
-# symlink the usr local ruby to the one expected
-# in a task
-RUN mkdir -p /opt/puppetlabs/puppet/bin/ && \
-    ln -s /usr/bin/ruby /opt/puppetlabs/puppet/bin/ruby
 
 # Final image
 FROM build
