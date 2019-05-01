@@ -42,7 +42,7 @@ sudo chmod a+rx -R volumes/
 
 At this point it is required to generate certs for the `aceserver`, this can be achieved though:
 
-`docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0,puppet`
+`docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0,puppet,spec_puppet_1,ace_aceserver_1`
 
 On Linux, ensure that you have access to the newly created files:
 
@@ -51,6 +51,15 @@ sudo chmod a+rx -R volumes/
 ```
 
 Reasoning for this is that it makes it easier to ensure that the cert names are consistent across environments.
+
+_Note_: If the `aceserver` certificate needs regenerated the following steps can be performed:
+
+```
+docker exec spec_puppet_1 puppetserver ca revoke --certname aceserver
+docker exec spec_puppet_1 rm /etc/puppetlabs/puppet/ssl/certs/aceserver.pem /etc/puppetlabs/puppet/ssl/private_keys/aceserver.pem /etc/puppetlabs/puppet/ssl/public_keys/aceserver.pem /etc/puppetlabs/puppet/ssl/ca/signed/aceserver.pem
+```
+
+And then generate the certificate again using the `ca generate` command from above.
 
 ## Verifying the services
 
