@@ -24,7 +24,7 @@ This will take some time as it needs to perform the initial build of fetching th
 Navigate to the `spec/` folder and build the Puppetserver and PuppetDB containers using the same command. The Puppetserver will take some time to start and typically using the following command to verify that it is ready:
 
 ```
-docker logs --follow spec_puppetserver_1
+docker logs --follow spec_puppet_1
 ```
 
 Once the Puppetserver is ready, the following message is reported:
