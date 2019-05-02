@@ -16,6 +16,31 @@ RSpec.describe ACE::PluginCache do
     allow(ACE::ForkUtil).to receive(:isolate).and_yield
   end
 
+  describe '#expire' do
+    before do
+      allow(Dir).to receive(:glob).with('foo/environments/*').and_return(['foo/environments/production',
+                                                                          'foo/environments/bar'])
+      allow(File).to receive(:directory?).with('foo/environments/production').and_return(true)
+      allow(File).to receive(:directory?).with('foo/environments/bar').and_return(true)
+      allow(File).to receive(:mtime).with('foo/environments/bar').and_return(Time.now)
+    end
+
+    it 'removes only directories which have expired' do
+      allow(File).to receive(:mtime).with('foo/environments/production').and_return(Time.now -
+                                                                                    (ACE::PluginCache::PURGE_TTL + 100))
+      allow(FileUtils).to receive(:remove_dir)
+      described_class.new('foo/environments')
+      expect(FileUtils).to have_received(:remove_dir).with('foo/environments/production')
+      expect(FileUtils).not_to have_received(:remove_dir).with('foo/environments/bar')
+    end
+    it 'does not remove directories when nothing expired' do
+      allow(File).to receive(:mtime).with('foo/environments/production').and_return(Time.now)
+      allow(FileUtils).to receive(:remove_dir)
+      described_class.new('foo/environments')
+      expect(FileUtils).not_to have_received(:remove_dir)
+    end
+  end
+
   context 'with a mock filesystem' do
     before do
       allow(FileUtils).to receive(:mkdir_p)
