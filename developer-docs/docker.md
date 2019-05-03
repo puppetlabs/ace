@@ -4,24 +4,13 @@
 
 [Docker-compose installation](https://docs.docker.com/compose/install/) would need to be followed and setup in order to use the ACE containers for development.
 
-
-The ACE compose file is dependent on a Docker network created when launching the Puppetserver and PuppetDB containers within the `spec/` directory, the network will default to `spec_default`, since the containers are built from the `spec/` directory they will be assigned the `<folder>_default` network.
-
-As the ACE container is build outside of the `spec/` directory it would not be able to create the `spec_default` network. This can be created manually through:
-
-```
-docker network create spec_default
-```
-
-Once this is done the ACE container can be launched by executing the following within the root folder:
+The ACE service is dependent on having access to a Puppetserver and a PuppetDB, these are included as Docker containers. Navigate to the `spec/` folder and build the Puppetserver and PuppetDB containers using the following command.
 
 ```
 docker-compose up -d --build
 ```
 
-This will take some time as it needs to perform the initial build of fetching the images and running through the build.
-
-Navigate to the `spec/` folder and build the Puppetserver and PuppetDB containers using the same command. The Puppetserver will take some time to start and typically using the following command to verify that it is ready:
+The Puppetserver will take some time to start and typically using the following command to verify that it is ready:
 
 ```
 docker logs --follow spec_puppet_1
@@ -52,6 +41,12 @@ sudo chmod a+rx -R volumes/
 
 Reasoning for this is that it makes it easier to ensure that the cert names are consistent across environments.
 
+Once the containers in the `spec/` directory are running, the ACE container can be launched by executing the following command within the root of the project:
+
+```
+docker-compose up -d --build
+```
+
 _Note_: If the `aceserver` certificate needs regenerated the following steps can be performed:
 
 ```
@@ -65,7 +60,7 @@ And then generate the certificate again using the `ca generate` command from abo
 
 [Postman](https://www.getpostman.com/) is advisable to verify that the endpoints are configured. In order to set up Postman, navigate to Settings > Certificates and add client certificates for hosts `0.0.0.0:8140` and `0.0.0.0:44633` where the CRT file points to `spec/volumes/puppet/ssl/certs/aceserver.pem` and Key file points to `spec/volumes/puppet/ssl/private_keys/aceserver.pem`
 
-*Note*: These cert and key files will only be created when the PuppetServer container has finished initalising.
+*Note*: These cert and key files will only be created when the PuppetServer container has finished initalising and the `ca generate` command has been used.
 
 ### PuppetServer /tasks/:module/:task
 
