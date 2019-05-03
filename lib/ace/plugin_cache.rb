@@ -9,9 +9,19 @@ require 'ace/fork_util'
 module ACE
   class PluginCache
     attr_reader :cache_dir_mutex, :cache_dir
+
+    PURGE_TIMEOUT = 60 * 60
+    PURGE_INTERVAL = 24 * PURGE_TIMEOUT
+    PURGE_TTL = 7 * PURGE_INTERVAL
+
     def initialize(environments_cache_dir)
       @cache_dir = environments_cache_dir
       @cache_dir_mutex = Concurrent::ReadWriteLock.new
+
+      @purge = Concurrent::TimerTask.new(execution_interval: PURGE_INTERVAL,
+                                         timeout_interval: PURGE_TIMEOUT,
+                                         run_now: true) { expire(PURGE_TTL) }
+      @purge.execute
     end
 
     def setup
@@ -74,6 +84,24 @@ module ACE
       Puppet[:plugindest] = File.join(environments_dir, 'plugins')
       Puppet::Configurer::PluginHandler.new.download_plugins(env)
       libdir(File.join(environments_dir, 'plugins'))
+    end
+
+    # the cache_dir will be the `cache-dir` from
+    # the ace config, with the appended environments, i.e.
+    # /opt/puppetlabs/server/data/ace-server/cache/environments
+    # then the directories within this path, which will be
+    # the puppet environments will be removed if they have
+    # not been modified in the last 7 days
+    # when the purge runs (every 24 hours)
+    def expire(purge_ttl)
+      expired_time = Time.now - purge_ttl
+      cache_dir_mutex.with_write_lock do
+        Dir.glob(File.join(cache_dir, '*')).select { |f| File.directory?(f) }.each do |dir|
+          if File.mtime(dir) < expired_time
+            FileUtils.remove_dir(dir)
+          end
+        end
+      end
     end
   end
 end
