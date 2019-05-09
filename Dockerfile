@@ -10,7 +10,7 @@ RUN mkdir /ace
 # Gemfile requires gemspec which requires ace/version which requires ace
 ADD . /ace
 WORKDIR /ace
-RUN rm Gemfile.lock
+RUN rm -f Gemfile.lock
 RUN bundle install --no-cache --path vendor/bundle
 
 # Final image
