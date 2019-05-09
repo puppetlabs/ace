@@ -7,7 +7,6 @@ env:
 services:
   - docker
 before_install:
-  - gem install bundler -v 1.16.1
   - docker network create spec_default
   - docker-compose -f ./spec/docker-compose.yml up -d --build
   - docker ps -a
