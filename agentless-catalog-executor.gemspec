@@ -31,6 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "sinatra", ">= 2.0.4"
 
   spec.add_development_dependency "bundler", ">= 1.16", "< 3.0.0"
+  spec.add_development_dependency "faraday"
   spec.add_development_dependency "rack-test", "~> 1.0"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
