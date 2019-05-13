@@ -2,7 +2,6 @@
 
 require 'ace/plugin_cache'
 require 'ace/puppet_util'
-require 'webmock/rspec'
 require 'hocon'
 
 RSpec.describe ACE::PluginCache do

@@ -3,6 +3,7 @@ version: '3'
 services:
   puppet:
     hostname: puppet
+    container_name: spec_puppet_1
     build: .
     ports:
       - 8140:8140
@@ -14,6 +15,7 @@ services:
       - ./volumes/serverdata:/opt/puppetlabs/server/data/puppetserver/
 
   postgres:
+    container_name: spec_postgres_1
     environment:
       - POSTGRES_PASSWORD=puppetdb
       - POSTGRES_USER=puppetdb
@@ -27,6 +29,7 @@ services:
 
   puppetdb:
     hostname: puppetdb
+    container_name: spec_puppetdb_1
     image: puppet/puppetdb
     environment:
       - PUPPETDB_PASSWORD=puppetdb
