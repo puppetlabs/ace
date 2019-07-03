@@ -21,7 +21,7 @@ RSpec.describe ACE::Config do
     ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
      'ssl-cipher-suites', 'loglevel', 'logfile', 'whitelist',
      'concurrency', 'cache-dir', 'puppet-server-conn-timeout',
-     'puppet-server-uri', 'ssl-ca-crls']
+     'puppet-server-uri', 'ssl-ca-crls'].freeze
   }
 
   let(:complete_env_keys) {
