@@ -13,6 +13,9 @@ AllCops:
 Style/IfUnlessModifier:
   Enabled: false
 
+Style/WordArray:
+  Enabled: false
+
 Style/AccessModifierDeclarations:
   Enabled: false
 

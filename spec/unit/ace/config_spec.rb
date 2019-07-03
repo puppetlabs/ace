@@ -18,39 +18,39 @@ RSpec.describe ACE::Config do
   let(:base_config) { Hocon.load(requiredconfig)['ace-server'] }
 
   let(:complete_config_keys) {
-    %w[host port ssl-cert ssl-key ssl-ca-cert
-       ssl-cipher-suites loglevel logfile whitelist
-       concurrency cache-dir puppet-server-conn-timeout
-       puppet-server-uri ssl-ca-crls]
+    ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
+     'ssl-cipher-suites', 'loglevel', 'logfile', 'whitelist',
+     'concurrency', 'cache-dir', 'puppet-server-conn-timeout',
+     'puppet-server-uri', 'ssl-ca-crls'].freeze
   }
 
   let(:complete_env_keys) {
-    %w[ssl-cert ssl-key ssl-ca-cert loglevel
-       concurrency puppet-server-conn-timeout
-       puppet-server-uri ssl-ca-crls]
+    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'loglevel',
+     'concurrency', 'puppet-server-conn-timeout',
+     'puppet-server-uri', 'ssl-ca-crls']
   }
 
   let(:complete_ssl_keys) {
-    %w[ssl-cert ssl-key ssl-ca-cert ssl-ca-crls]
+    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'ssl-ca-crls']
   }
 
   let(:complete_required_keys) {
-    %w[ssl-cert ssl-key ssl-ca-cert ssl-ca-crls puppet-server-uri cache-dir]
+    ['ssl-cert', 'ssl-key', 'ssl-ca-cert', 'ssl-ca-crls', 'puppet-server-uri', 'cache-dir']
   }
 
   let(:complete_defaults) {
     { 'host' => '127.0.0.1',
       'loglevel' => 'notice',
-      'ssl-cipher-suites' => %w[ECDHE-ECDSA-AES256-GCM-SHA384
-                                ECDHE-RSA-AES256-GCM-SHA384
-                                ECDHE-ECDSA-CHACHA20-POLY1305
-                                ECDHE-RSA-CHACHA20-POLY1305
-                                ECDHE-ECDSA-AES128-GCM-SHA256
-                                ECDHE-RSA-AES128-GCM-SHA256
-                                ECDHE-ECDSA-AES256-SHA384
-                                ECDHE-RSA-AES256-SHA384
-                                ECDHE-ECDSA-AES128-SHA256
-                                ECDHE-RSA-AES128-SHA256],
+      'ssl-cipher-suites' => ['ECDHE-ECDSA-AES256-GCM-SHA384',
+                              'ECDHE-RSA-AES256-GCM-SHA384',
+                              'ECDHE-ECDSA-CHACHA20-POLY1305',
+                              'ECDHE-RSA-CHACHA20-POLY1305',
+                              'ECDHE-ECDSA-AES128-GCM-SHA256',
+                              'ECDHE-RSA-AES128-GCM-SHA256',
+                              'ECDHE-ECDSA-AES256-SHA384',
+                              'ECDHE-RSA-AES256-SHA384',
+                              'ECDHE-ECDSA-AES128-SHA256',
+                              'ECDHE-RSA-AES128-SHA256'],
       'port' => 44633,
       'concurrency' => 10,
       'cache-dir' => "/opt/puppetlabs/server/data/ace-server/cache",
