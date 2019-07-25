@@ -10,6 +10,7 @@ services:
     environment:
       - DNS_ALT_NAMES=puppet,localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0
       - PUPPETDB_SERVER_URLS=https://puppetdb:8081
+      - CA_ALLOW_SUBJECT_ALT_NAMES=true
     volumes:
       - ./volumes/puppet:/etc/puppetlabs/puppet/
       - ./volumes/serverdata:/opt/puppetlabs/server/data/puppetserver/
