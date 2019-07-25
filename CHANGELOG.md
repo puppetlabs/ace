@@ -3,6 +3,21 @@
 All significant changes to this repo will be summarized in this file.
 
 
+## [v0.10.0](https://github.com/puppetlabs/ace/tree/v0.10.0) (2019-07-25)
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v0.9.1...v0.10.0)
+
+**Merged pull requests:**
+
+- fixed rubocop offenses [\#46](https://github.com/puppetlabs/ace/pull/46) ([Lavinia-Dan](https://github.com/Lavinia-Dan))
+- \(FM-8106\) Workaround license\_finder issue [\#45](https://github.com/puppetlabs/ace/pull/45) ([DavidS](https://github.com/DavidS))
+- \(FM-7953\) Add acceptance tests to travis [\#43](https://github.com/puppetlabs/ace/pull/43) ([da-ar](https://github.com/da-ar))
+- \(maint\) making it clear on order of running the containers [\#42](https://github.com/puppetlabs/ace/pull/42) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
+- \(FM-7954\) plugin cache purge for stale environments [\#41](https://github.com/puppetlabs/ace/pull/41) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
+- \(maint\) fixing up the docker setup for executing catalogs [\#40](https://github.com/puppetlabs/ace/pull/40) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
+- \(maint\) Docker doc update [\#39](https://github.com/puppetlabs/ace/pull/39) ([willmeek](https://github.com/willmeek))
+- \(FM-7927\) Update developer docs [\#38](https://github.com/puppetlabs/ace/pull/38) ([DavidS](https://github.com/DavidS))
+- \(FM-7975\) Remove mock responses from /execute\_catalog endpoint [\#37](https://github.com/puppetlabs/ace/pull/37) ([da-ar](https://github.com/da-ar))
+
 ## [v0.9.1](https://github.com/puppetlabs/ace/tree/v0.9.1) (2019-04-16)
 [Full Changelog](https://github.com/puppetlabs/ace/compare/v0.9.0...v0.9.1)
 
@@ -12,6 +27,7 @@ All significant changes to this repo will be summarized in this file.
 
 **Merged pull requests:**
 
+- \(maint\) Release prep for v0.9.1 [\#36](https://github.com/puppetlabs/ace/pull/36) ([willmeek](https://github.com/willmeek))
 - \(FM-7927\) Docs review [\#35](https://github.com/puppetlabs/ace/pull/35) ([clairecadman](https://github.com/clairecadman))
 
 ## [v0.9.0](https://github.com/puppetlabs/ace/tree/v0.9.0) (2019-04-16)
