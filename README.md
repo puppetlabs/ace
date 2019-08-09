@@ -18,7 +18,7 @@ ACE is built-in to PE as pe-ace-server.
 
 ## Development
 
-As ACE is dependent on Puppet Server, there is a docker-compose file in the `spec/` directory which we advise you run before  the ACE service to ensure that the certs and keys are valid. For more information, see the [docker documentation](developer-docs/docker.md).
+As ACE is dependent on Puppet Server, there is a docker-compose file in the `spec/` directory which we advise you run before the ACE service to ensure that the certs and keys are valid. For more information, see the [docker documentation](developer-docs/docker.md).
 
 To release a new version, update the version number in `version.rb`, generate a new changelog with `bundle exec rake changelog`, commit the results and run `bundle exec rake release`, which creates a git tag for the version, pushes git commits and tags, and pushes the `.gem` file to [rubygems.org](https://rubygems.org). Released gems are eventually consumed by [ace-vanagon](https://github.com/puppetlabs/ace-vanagon) and promoted into PE.
 
