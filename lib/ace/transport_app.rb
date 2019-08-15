@@ -110,6 +110,12 @@ module ACE
       end
     end
 
+    def nest_metrics(metrics)
+      Hash[metrics.fetch('resources', {}).values.map do |name, _human_name, value|
+        [name, value]
+      end]
+    end
+
     # returns a hash of trusted facts that will be used
     # to request a catalog for the target
     def self.trusted_facts(certname)
@@ -223,14 +229,28 @@ module ACE
       end
 
       begin
-        @plugins.with_synced_libdir(environment, certname) do
+        run_result = @plugins.with_synced_libdir(environment, certname) do
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
           configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
-          configurer.run(transport_name: certname,
-                         environment: environment,
-                         network_device: true,
-                         pluginsync: false,
-                         trusted_facts: ACE::TransportApp.trusted_facts(certname))
+          options = { transport_name: certname,
+                      environment: environment,
+                      network_device: true,
+                      pluginsync: false,
+                      trusted_facts: ACE::TransportApp.trusted_facts(certname) }
+          configurer.run(options)
+          # `options[:report]` gets populated by configurer.run with the report of the run with a
+          # Puppet::Transaction::Report instance
+          # see https://github.com/puppetlabs/puppet/blob/c956ad95fcdd9aabb28e196b55d1f112b5944777/lib/puppet/configurer.rb#L211
+          report = options[:report]
+          # remember that this hash gets munged by fork's json serialising
+          {
+            'time' => report.time,
+            'transaction_uuid' => trans_id,
+            'environment' => report.environment,
+            'status' => report.status,
+            'metrics' => nest_metrics(report.metrics),
+            'job_id' => job_id
+          }
         end
       rescue ACE::Error => e
         process_error = {
@@ -255,11 +275,8 @@ module ACE
       else
         result = {
           certname: certname,
-          status: 'report_generated',
-          result: {
-            transaction_uuid: trans_id,
-            job_id: job_id
-          }
+          status: run_result.delete('status'),
+          result: run_result
         }
         [200, result.to_json]
       end

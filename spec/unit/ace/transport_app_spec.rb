@@ -252,12 +252,20 @@ RSpec.describe ACE::TransportApp do
   ##################
   describe '/execute_catalog' do
     let(:certname) { 'fw.example.net' }
+    let(:report) {
+      OpenStruct.new(time: 'time',
+                     environment: 'some_env',
+                     status: 'unchanged',
+                     metrics: { "resources" => OpenStruct.new("values" => [
+                                                                ["metric name", "The Human Readable Metric Name", 666]
+                                                              ]) })
+    }
 
     before {
       allow(plugins).to receive(:with_synced_libdir).and_yield
       allow(described_class).to receive(:init_puppet_target)
       allow(ACE::Configurer).to receive(:new).and_return(configurer)
-      allow(configurer).to receive(:run)
+      allow(configurer).to receive(:run) { |options| options[:report] = report }
     }
 
     describe 'success' do
@@ -269,8 +277,12 @@ RSpec.describe ACE::TransportApp do
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
-        expect(result).to eq('certname' => certname, 'status' => 'report_generated',
-                             'result' => { 'job_id' => '<id string>', 'transaction_uuid' => '<uuid string>' })
+        expect(result).to eq('certname' => certname, 'status' => 'unchanged',
+                             "result" => { "environment" => "some_env",
+                                           "job_id" => "<id string>",
+                                           "metrics" => { "metric name" => 666 },
+                                           "time" => "time",
+                                           "transaction_uuid" => "<uuid string>" })
       end
     end
 
