@@ -59,14 +59,14 @@ RSpec.describe ACE::TransportApp do
     end
 
     describe 'success' do
-      it 'returns 200 with `report_generated` status' do
+      it 'returns 200 with `unchanged` status' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
         expect(result['certname']).to eq('localhost')
-        expect(result['status']).to eq('report_generated')
+        expect(result['status']).to eq('unchanged')
       end
     end
   end

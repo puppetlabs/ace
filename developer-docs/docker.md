@@ -31,7 +31,9 @@ sudo chmod a+rx -R volumes/
 
 At this point it is required to generate certs for the `aceserver`, this can be achieved though:
 
-`docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0,puppet,spec_puppet_1,ace_aceserver_1`
+```
+docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0,puppet,spec_puppet_1,ace_aceserver_1
+```
 
 On Linux, ensure that you have access to the newly created files:
 
