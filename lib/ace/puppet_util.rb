@@ -18,11 +18,11 @@ module ACE
       # as per request settings will be set later on
       # to satisfy multi-environments
       Puppet.settings[:vardir] = cachedir
-      Puppet.settings[:confdir] = File.join(cachedir, 'conf')
-      Puppet.settings[:rundir] = File.join(cachedir, 'run')
-      Puppet.settings[:logdir] = File.join(cachedir, 'log')
-      Puppet.settings[:codedir] = File.join(cachedir, 'code')
-      Puppet.settings[:plugindest] = File.join(cachedir, 'plugins')
+      Puppet.settings[:confdir] = File.join(cachedir, 'conf_x')
+      Puppet.settings[:rundir] = File.join(cachedir, 'run_x')
+      Puppet.settings[:logdir] = File.join(cachedir, 'log_x')
+      Puppet.settings[:codedir] = File.join(cachedir, 'code_x')
+      Puppet.settings[:plugindest] = File.join(cachedir, 'plugin_x')
 
       # ssl_context will be a persistent context
       cert_provider = Puppet::X509::CertProvider.new(
