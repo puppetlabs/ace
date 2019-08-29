@@ -5,7 +5,7 @@ require 'ace/puppet_util'
 require 'hocon'
 
 RSpec.describe ACE::PluginCache do
-  let(:plugin_cache) { described_class.new('/tmp/environments') }
+  let(:plugin_cache) { described_class.new('/tmp/environment_cache') }
 
   let(:puppetserver_directory_path) { '/foo/' }
   let(:fake_file_path) { 'fake_file.rb' }
@@ -17,25 +17,25 @@ RSpec.describe ACE::PluginCache do
 
   describe '#expire' do
     before do
-      allow(Dir).to receive(:glob).with('foo/environments/*').and_return(['foo/environments/production',
-                                                                          'foo/environments/bar'])
-      allow(File).to receive(:directory?).with('foo/environments/production').and_return(true)
-      allow(File).to receive(:directory?).with('foo/environments/bar').and_return(true)
-      allow(File).to receive(:mtime).with('foo/environments/bar').and_return(Time.now)
+      allow(Dir).to receive(:glob).with('foo/environment_cache/*').and_return(['foo/environment_cache/production',
+                                                                               'foo/environment_cache/bar'])
+      allow(File).to receive(:directory?).with('foo/environment_cache/production').and_return(true)
+      allow(File).to receive(:directory?).with('foo/environment_cache/bar').and_return(true)
+      allow(File).to receive(:mtime).with('foo/environment_cache/bar').and_return(Time.now)
     end
 
     it 'removes only directories which have expired' do
-      allow(File).to receive(:mtime).with('foo/environments/production').and_return(Time.now -
+      allow(File).to receive(:mtime).with('foo/environment_cache/production').and_return(Time.now -
                                                                                     (ACE::PluginCache::PURGE_TTL + 100))
       allow(FileUtils).to receive(:remove_dir)
-      described_class.new('foo/environments')
-      expect(FileUtils).to have_received(:remove_dir).with('foo/environments/production')
-      expect(FileUtils).not_to have_received(:remove_dir).with('foo/environments/bar')
+      described_class.new('foo/environment_cache')
+      expect(FileUtils).to have_received(:remove_dir).with('foo/environment_cache/production')
+      expect(FileUtils).not_to have_received(:remove_dir).with('foo/environment_cache/bar')
     end
     it 'does not remove directories when nothing expired' do
-      allow(File).to receive(:mtime).with('foo/environments/production').and_return(Time.now)
+      allow(File).to receive(:mtime).with('foo/environment_cache/production').and_return(Time.now)
       allow(FileUtils).to receive(:remove_dir)
-      described_class.new('foo/environments')
+      described_class.new('foo/environment_cache')
       expect(FileUtils).not_to have_received(:remove_dir)
     end
   end
@@ -53,7 +53,7 @@ RSpec.describe ACE::PluginCache do
       it { expect(plugin_cache.setup).to be_a(described_class) }
       it "creates the cache-dir" do
         plugin_cache.setup
-        expect(FileUtils).to have_received(:mkdir_p).with('/tmp/environments')
+        expect(FileUtils).to have_received(:mkdir_p).with('/tmp/environment_cache')
       end
     end
 
@@ -78,7 +78,7 @@ RSpec.describe ACE::PluginCache do
                                            'spec/fixtures/ssl/crl.pem',
                                            'spec/fixtures/ssl/key.pem',
                                            'spec/fixtures/ssl/cert.pem',
-                                           '/tmp/environments',
+                                           '/tmp/environment_cache',
                                            URI.parse('https://localhost:9999'))
       ACE::PuppetUtil.isolated_puppet_settings('foo', 'production')
       pool = Puppet::Network::HTTP::NoCachePool.new
