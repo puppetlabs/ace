@@ -147,7 +147,28 @@ RSpec.describe ACE::TransportApp do
     end
 
     context 'when the task executes cleanly' do
-      it 'runs returns the output' do
+      it 'returns the output' do
+        post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+        result = JSON.parse(last_response.body)
+        expect(result).to include('status' => 'success')
+        expect(result['result']['output']).to eq('Hello!')
+      end
+    end
+
+    context 'when no remote-transport is specified' do
+      let(:connection_info) do
+        {
+          'address': 'hostname',
+          'username': 'user',
+          'password': 'password'
+        }
+      end
+
+      it 'returns the output' do
         post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
 
         expect(last_response.errors).to match(/\A\Z/)
