@@ -17,8 +17,7 @@
           "description": ""
         }
       },
-      "additionalProperties": true,
-      "required": ["remote-transport"]
+      "additionalProperties": true
     },
     "task": { "$ref": "file:task"},
     "parameters": {
