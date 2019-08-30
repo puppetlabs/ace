@@ -23,7 +23,7 @@ module ACE
       Puppet.settings[:logdir] = File.join(cachedir, 'log')
       Puppet.settings[:codedir] = File.join(cachedir, 'code')
       Puppet.settings[:plugindest] = File.join(cachedir, 'plugins')
-      Puppet.push_context(Puppet.base_context(Puppet.settings), "Puppet Initialization")
+
       # ssl_context will be a persistent context
       cert_provider = Puppet::X509::CertProvider.new(
         capath: ca_cert_path,
@@ -35,18 +35,38 @@ module ACE
         private_key: OpenSSL::PKey::RSA.new(File.read(private_key_path, encoding: 'utf-8')),
         client_cert: OpenSSL::X509::Certificate.new(File.read(client_cert_path, encoding: 'utf-8'))
       )
-      Puppet.push_context({
-                            ssl_context: ssl_context,
-                            server: uri.host,
-                            serverport: uri.port
-                          }, "PuppetServer connection information to be used")
-      Puppet.settings.use :main, :agent, :ssl
-      Puppet::Transaction::Report.indirection.terminus_class = :rest
+      # Store SSL settings for reuse in isolated process
+      @ssl_settings = {
+        ssl_context: ssl_context,
+        server: uri.host,
+        serverport: uri.port
+      }
     end
 
-    def self.isolated_puppet_settings(certname, environment)
+    def self.isolated_puppet_settings(certname, environment, environment_dir)
       Puppet.settings[:certname] = certname
       Puppet.settings[:environment] = environment
+
+      Puppet.settings[:vardir] = File.join(environment_dir)
+      Puppet.settings[:confdir] = File.join(environment_dir, 'conf')
+      Puppet.settings[:rundir] = File.join(environment_dir, 'run')
+      Puppet.settings[:logdir] = File.join(environment_dir, 'log')
+      Puppet.settings[:codedir] = File.join(environment_dir, 'code')
+      Puppet.settings[:plugindest] = File.join(environment_dir, 'plugins')
+
+      # establish a base_context. This needs to be the first context on the stack, but must not be created
+      # before all settings have been set. For example, this will create a Puppet::Environments::Directories
+      # instance copying the :environmentpath setting and never updating this.
+      Puppet.push_context(Puppet.base_context(Puppet.settings), "Puppet Initialization")
+      Puppet.push_context(@ssl_settings, "PuppetServer connection information to be used")
+
+      # finalise settings initialisation
+      Puppet.settings.use :main, :agent, :ssl
+
+      # special override
+      Puppet::Transaction::Report.indirection.terminus_class = :rest
+
+      # configure the requested environment, and deploy new loaders
       env = Puppet::Node::Environment.remote(environment)
       Puppet.push_context({
                             configured_environment: environment,

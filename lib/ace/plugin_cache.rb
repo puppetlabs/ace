@@ -31,7 +31,7 @@ module ACE
 
     def with_synced_libdir(environment, certname, &block)
       ForkUtil.isolate do
-        ACE::PuppetUtil.isolated_puppet_settings(certname, environment)
+        ACE::PuppetUtil.isolated_puppet_settings(certname, environment, environment_dir(environment))
         with_synced_libdir_core(environment, &block)
       end
     end
@@ -76,12 +76,6 @@ module ACE
     def sync_core(environment)
       env = Puppet::Node::Environment.remote(environment)
       environments_dir = environment_dir(environment)
-      Puppet[:vardir] = File.join(environments_dir)
-      Puppet[:confdir] = File.join(environments_dir, 'conf')
-      Puppet[:rundir] = File.join(environments_dir, 'run')
-      Puppet[:logdir] = File.join(environments_dir, 'log')
-      Puppet[:codedir] = File.join(environments_dir, 'code')
-      Puppet[:plugindest] = File.join(environments_dir, 'plugins')
       Puppet::Configurer::PluginHandler.new.download_plugins(env)
       libdir(File.join(environments_dir, 'plugins'))
     end

@@ -80,7 +80,8 @@ RSpec.describe ACE::PluginCache do
                                            'spec/fixtures/ssl/cert.pem',
                                            '/tmp/environment_cache',
                                            URI.parse('https://localhost:9999'))
-      ACE::PuppetUtil.isolated_puppet_settings('foo', 'production')
+      FileUtils.mkdir_p('/tmp/environment_cache/production')
+      ACE::PuppetUtil.isolated_puppet_settings('foo', 'production', '/tmp/environment_cache/production')
       pool = Puppet::Network::HTTP::NoCachePool.new
       Puppet.push_context({
                             http_pool: pool
