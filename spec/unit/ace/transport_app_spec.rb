@@ -17,7 +17,7 @@ RSpec.describe ACE::TransportApp do
   let(:base_config) do
     {
       "puppet-server-uri" => "https://localhost:9999",
-      "cache-dir" => "/tmp/environments"
+      "cache-dir" => "/tmp/base_config"
     }
   end
   let(:executor) { instance_double(Bolt::Executor, 'executor') }

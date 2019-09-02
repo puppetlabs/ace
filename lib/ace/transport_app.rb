@@ -22,7 +22,7 @@ module ACE
       @executor = Bolt::Executor.new(0)
       tasks_cache_dir = File.join(@config['cache-dir'], 'tasks')
       @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir)).setup
-      environments_cache_dir = File.join(@config['cache-dir'], 'environments')
+      environments_cache_dir = File.join(@config['cache-dir'], 'environment_cache')
       @plugins = ACE::PluginCache.new(environments_cache_dir).setup
 
       @schemas = {

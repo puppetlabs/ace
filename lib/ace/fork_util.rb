@@ -39,6 +39,7 @@ module ACE
           }.to_json)
           success = false
         ensure
+          writer.flush
           Process.exit! success
         end
         # :nocov:
@@ -53,6 +54,8 @@ module ACE
       if $CHILD_STATUS != 0
         error = JSON.parse(output)
         raise ACE::Error.new(error['msg'], error['kind'], error['details'])
+      elsif output == ''
+        raise ACE::Error.new('spawned process returned no result', 'puppetlabs/ace/fork_util', 'no details')
       else
         JSON.parse(output)
       end

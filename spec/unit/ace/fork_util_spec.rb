@@ -75,5 +75,23 @@ RSpec.describe ACE::ForkUtil do
         expect { described_class.isolate {} }.to raise_error SystemExit
       end
     end
+
+    describe 'premature fork exit' do
+      let(:reader) { instance_double(IO, 'reader') }
+      let(:writer) { instance_double(IO, 'writer') }
+
+      before do
+        allow(described_class).to receive(:fork).and_return(true)
+        allow(Process).to receive(:wait).with(true)
+        allow(IO).to receive(:pipe).and_return([reader, writer])
+        allow(writer).to receive(:close)
+        # the forked process can go away without returning any output
+        allow(reader).to receive(:read).and_return('')
+      end
+
+      it 'raises a fork_util error' do
+        expect { described_class.isolate {} }.to raise_error ACE::Error, /spawned process returned no result/
+      end
+    end
   end
 end
