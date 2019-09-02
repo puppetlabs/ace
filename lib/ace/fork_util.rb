@@ -49,12 +49,12 @@ module ACE
         exit 1
       end
       writer.close
-      output = reader.read
+      output = reader.readlines('')[0]
       Process.wait(pid)
       if $CHILD_STATUS != 0
         error = JSON.parse(output)
         raise ACE::Error.new(error['msg'], error['kind'], error['details'])
-      elsif output == ''
+      elsif output.nil?
         raise ACE::Error.new('spawned process returned no result', 'puppetlabs/ace/fork_util', 'no details')
       else
         JSON.parse(output)
