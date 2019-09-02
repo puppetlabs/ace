@@ -41,7 +41,7 @@ module Puppet
             "transaction_uuid": request.options[:transaction_uuid],
             "job_id": request.options[:job_id],
             "options": {
-              "prefer_requested_environment": true,
+              "prefer_requested_environment": false,
               "capture_logs": false
             }
           }

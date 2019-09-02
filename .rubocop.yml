@@ -98,3 +98,8 @@ RSpec/ExampleLength:
 Lint/AmbiguousBlockAssociation:
   Exclude:
     - "spec/**/*"
+
+# complex code is complex :-(
+RSpec/NestedGroups:
+  Enabled: true
+  Max: 5

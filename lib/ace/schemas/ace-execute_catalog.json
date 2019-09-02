@@ -28,6 +28,10 @@
           "type": "string",
           "description": "The name of the environment for which to compile the catalog."
         },
+        "enforce_environment": {
+          "type": "boolean",
+          "description": "Whether to force agents to run in the same environment in which their assigned applications are defined. (This key is required to be false if `environment` is an empty string)."
+        },
         "transaction_uuid": {
           "type": "string",
           "description": "The id for tracking the catalog compilation and report submission."
@@ -40,7 +44,8 @@
       "additionalProperties": true,
       "required": [
         "certname",
-        "environment"
+        "environment",
+        "enforce_environment"
       ]
     }
   },

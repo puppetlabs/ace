@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'ace/transport_app'
-require 'rack/test'
 require 'ace/config'
+require 'ace/transport_app'
 require 'faraday'
 require 'openssl'
+require 'rack/test'
 
 RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
@@ -51,23 +51,47 @@ RSpec.describe ACE::TransportApp do
         },
         "compiler": {
           "certname": "localhost",
-          "environment": "production",
+          "environment": environment,
+          "enforce_environment": enforce_environment,
           "transaction_uuid": "2d931510-d99f-494a-8c67-87feb05e1594",
           "job_id": "1"
         }
       }
     end
 
-    describe 'success' do
-      it 'returns 200 with `unchanged` status' do
-        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
-        expect(last_response.errors).to match(/\A\Z/)
-        expect(last_response).to be_ok
-        expect(last_response.status).to eq(200)
-        result = JSON.parse(last_response.body)
-        expect(result['certname']).to eq('localhost')
-        expect(result['status']).to eq('unchanged')
-      end
+    before { post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json' }
+
+    context 'when enforcing a matching environment' do
+      let(:environment) { "production" }
+      let(:enforce_environment) { true }
+
+      it { expect(last_response.errors).to match(/\A\Z/) }
+      it { expect(last_response).to be_ok }
+      it { expect(last_response.status).to eq(200) }
+      it { expect(JSON.parse(last_response.body)['certname']).to eq('localhost') }
+      it { expect(JSON.parse(last_response.body)['status']).to eq('unchanged') }
+    end
+
+    context 'when enforcing a non-matching environment' do
+      let(:environment) { "something_else" }
+      let(:enforce_environment) { true }
+
+      it { expect(last_response.errors).to match(/\A\Z/) }
+      it { expect(last_response).to be_ok }
+      it { expect(last_response.status).to eq(200) }
+      it { expect(JSON.parse(last_response.body)['certname']).to eq('localhost') }
+      it { expect(JSON.parse(last_response.body)['status']).to eq('failed') }
+    end
+
+    context 'when not enforcing a environment' do
+      let(:environment) { "" }
+      let(:enforce_environment) { false }
+
+      it { expect(last_response.errors).to match(/\A\Z/) }
+      it { expect(last_response).to be_ok }
+      it { expect(last_response.status).to eq(200) }
+      it { expect(JSON.parse(last_response.body)['certname']).to eq('localhost') }
+      it { expect(JSON.parse(last_response.body)['status']).to eq('unchanged') }
     end
   end
 

@@ -61,7 +61,7 @@ RSpec.describe ACE::PluginCache do
       it 'isolates the call and yields' do
         allow(plugin_cache).to receive(:with_synced_libdir_core).and_yield
 
-        expect { |b| plugin_cache.with_synced_libdir('environment', 'certname', &b) }.to yield_with_no_args
+        expect { |b| plugin_cache.with_synced_libdir('environment', false, 'certname', &b) }.to yield_with_no_args
         expect(ACE::ForkUtil).to have_received(:isolate).ordered
         expect(plugin_cache).to have_received(:with_synced_libdir_core).with('environment').ordered
       end
@@ -81,7 +81,7 @@ RSpec.describe ACE::PluginCache do
                                            '/tmp/environment_cache',
                                            URI.parse('https://localhost:9999'))
       FileUtils.mkdir_p('/tmp/environment_cache/production')
-      ACE::PuppetUtil.isolated_puppet_settings('foo', 'production', '/tmp/environment_cache/production')
+      ACE::PuppetUtil.isolated_puppet_settings('foo', 'production', false, '/tmp/environment_cache/production')
       pool = Puppet::Network::HTTP::NoCachePool.new
       Puppet.push_context({
                             http_pool: pool
