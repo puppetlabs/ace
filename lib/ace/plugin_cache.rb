@@ -29,9 +29,14 @@ module ACE
       self
     end
 
-    def with_synced_libdir(environment, certname, &block)
+    def with_synced_libdir(environment, enforce_environment, certname, &block)
       ForkUtil.isolate do
-        ACE::PuppetUtil.isolated_puppet_settings(certname, environment, environment_dir(environment))
+        ACE::PuppetUtil.isolated_puppet_settings(
+          certname,
+          environment,
+          enforce_environment,
+          environment_dir(environment)
+        )
         with_synced_libdir_core(environment, &block)
       end
     end
@@ -65,7 +70,7 @@ module ACE
     def environment_dir(environment)
       environment_dir = File.join(cache_dir, environment)
       cache_dir_mutex.with_write_lock do
-        FileUtils.mkdir_p(environment_dir)
+        FileUtils.mkdir_p(File.join(environment_dir, 'code', 'environments', environment))
         FileUtils.touch(environment_dir)
       end
       environment_dir

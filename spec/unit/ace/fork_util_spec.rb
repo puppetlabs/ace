@@ -86,7 +86,7 @@ RSpec.describe ACE::ForkUtil do
         allow(IO).to receive(:pipe).and_return([reader, writer])
         allow(writer).to receive(:close)
         # the forked process can go away without returning any output
-        allow(reader).to receive(:read).and_return('')
+        allow(reader).to receive(:readlines).with('').and_return([])
       end
 
       it 'raises a fork_util error' do

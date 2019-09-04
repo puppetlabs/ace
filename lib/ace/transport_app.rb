@@ -205,6 +205,13 @@ module ACE
         validate_schema(@schemas["execute_catalog"], body)
 
         environment = body['compiler']['environment']
+        enforce_environment = body['compiler']['enforce_environment']
+        if environment == '' && !enforce_environment
+          environment = 'production'
+        elsif environment == '' && enforce_environment
+          raise ACE::Error.new('You MUST provide an `environment` when `enforce_environment` is set to true',
+                               'puppetlabs/ace/execute_catalog')
+        end
         certname = body['compiler']['certname']
         trans_id = body['compiler']['transaction_uuid']
         job_id = body['compiler']['job_id']
@@ -229,7 +236,7 @@ module ACE
       end
 
       begin
-        run_result = @plugins.with_synced_libdir(environment, certname) do
+        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname) do
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
           configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
           options = { transport_name: certname,

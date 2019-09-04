@@ -43,9 +43,10 @@ module ACE
       }
     end
 
-    def self.isolated_puppet_settings(certname, environment, environment_dir)
+    def self.isolated_puppet_settings(certname, environment, enforce_environment, environment_dir)
       Puppet.settings[:certname] = certname
       Puppet.settings[:environment] = environment
+      Puppet.settings[:strict_environment_mode] = enforce_environment
 
       Puppet.settings[:vardir] = File.join(environment_dir)
       Puppet.settings[:confdir] = File.join(environment_dir, 'conf')
