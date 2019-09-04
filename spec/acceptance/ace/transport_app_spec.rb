@@ -93,6 +93,22 @@ RSpec.describe ACE::TransportApp do
       it { expect(JSON.parse(last_response.body)['certname']).to eq('localhost') }
       it { expect(JSON.parse(last_response.body)['status']).to eq('unchanged') }
     end
+
+    context 'when enforcing an environment and not providing an environment' do
+      let(:environment) { "" }
+      let(:enforce_environment) { true }
+
+      it { expect(last_response.errors).to match(/\A\Z/) }
+      it { expect(last_response).not_to be_ok }
+      it { expect(last_response.status).to eq(400) }
+      it { expect(JSON.parse(last_response.body)['status']).to eq('failure') }
+      it { expect(JSON.parse(last_response.body)['result']['_error']['kind']).to eq('puppetlabs/ace/execute_catalog') }
+      it {
+        expect(JSON.parse(last_response.body)['result']['_error']['msg']).to eq(
+          'You MUST provide an `environment` when `enforce_environment` is set to true'
+        )
+      }
+    end
   end
 
   ##################

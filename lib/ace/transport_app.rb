@@ -205,8 +205,13 @@ module ACE
         validate_schema(@schemas["execute_catalog"], body)
 
         environment = body['compiler']['environment']
-        environment = 'production' if environment == ''
         enforce_environment = body['compiler']['enforce_environment']
+        if environment == '' && !enforce_environment
+          environment = 'production'
+        elsif environment == '' && enforce_environment
+          raise ACE::Error.new('You MUST provide an `environment` when `enforce_environment` is set to true',
+                               'puppetlabs/ace/execute_catalog')
+        end
         certname = body['compiler']['certname']
         trans_id = body['compiler']['transaction_uuid']
         job_id = body['compiler']['job_id']

@@ -28,7 +28,7 @@ module ACE
             }
           }.to_json)
           success = false
-        rescue StandardError => e
+        rescue Exception => e # rubocop:disable Lint/RescueException
           writer.puts({
             msg: e.message,
             kind: e.class,
