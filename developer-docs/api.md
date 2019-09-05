@@ -64,6 +64,7 @@ For example, the following will compile and execute a catalog on fw.example.net:
   "compiler":{
     "certname":"fw.example.net",
     "environment":"development",
+    "enforce_environment": "true",
     "transaction_uuid":"<uuid string>",
     "job_id":"<id string>"
   }
@@ -81,6 +82,7 @@ For pre-Transport devices (like F5), a uri can be sent:
   "compiler":{
     "certname":"f5.example.net",
     "environment":"development",
+    "enforce_environment": "true",
     "transaction_uuid":"<uuid string>",
     "job_id":"<id string>"
   }
@@ -103,6 +105,7 @@ The `compiler` is a JSON object which contains parameters regarding the compilat
 
 * `certname`
 * `environment`
+* `enforce_environment`
 * `transaction_uuid`
 * `job_id`
 
