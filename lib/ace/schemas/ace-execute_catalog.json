@@ -39,6 +39,26 @@
         "job_id": {
           "type": "string",
           "description": "The id of the orchestrator job that triggered this run."
+        },
+        "noop": {
+          "type": "boolean",
+          "description": "The operation should not be applied",
+          "default": false
+        },
+        "debug": {
+          "type": "boolean",
+          "description": "Show up to debug level messages",
+          "default": false
+        },
+        "trace": {
+          "type": "boolean",
+          "description": "Allows for a backtrace to be returned in the event of an exception",
+          "default": false
+        },
+        "evaltrace": {
+          "type": "boolean",
+          "description": "Reports on each step of the Puppet process",
+          "default": false
         }
       },
       "additionalProperties": true,
