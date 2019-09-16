@@ -84,11 +84,21 @@ module ACE
       end
 
       device_struct = Struct.new(:provider, :url, :name, :options)
+      type = target['remote-transport']
       # Return device
-      Puppet::Util::NetworkDevice.init(device_struct.new(transport,
-                                                         url,
-                                                         certname,
-                                                         {}))
+      begin
+        require 'puppet/resource_api/transport'
+        transport = Puppet::ResourceApi::Transport.connect(type, url)
+        Puppet::ResourceApi::Transport.inject_device(type, transport)
+      rescue Puppet::DevError => e
+        # raise e unless e.message.include? "Transport for `%{type}` not registered with"
+        puts e unless e.message.include? "Transport for `%{type}` not registered with"
+        # fallback to puppet device if there's no transport
+        Puppet::Util::NetworkDevice.init(device_struct.new(transport,
+                                                             url,
+                                                             certname,
+                                                             {}))
+      end
     end
 
     def scrub_stack_trace(result)
