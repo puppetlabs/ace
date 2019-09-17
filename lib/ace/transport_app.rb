@@ -240,13 +240,13 @@ module ACE
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
 
           # Apply compiler flags for Configurer
-          Puppet.settings[:noop] = body['compiler']['noop'] ? body['compiler']['noop'] : false
+          Puppet.settings[:noop] = body['compiler']['noop'] || false
           # grab the current debug level
           current_log_level = Puppet.settings[:log_level]
           # apply debug level if its specified
           Puppet.settings[:log_level] = :debug if body['compiler']['debug']
-          Puppet.settings[:trace] = body['compiler']['trace'] ? body['compiler']['trace'] : false
-          Puppet.settings[:evaltrace] = body['compiler']['evaltrace'] ? body['compiler']['evaltrace'] : false
+          Puppet.settings[:trace] = body['compiler']['trace'] || false
+          Puppet.settings[:evaltrace] = body['compiler']['evaltrace'] || false
 
           configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
           options = { transport_name: certname,
@@ -261,7 +261,6 @@ module ACE
           # Puppet::Transaction::Report instance
           # see https://github.com/puppetlabs/puppet/blob/c956ad95fcdd9aabb28e196b55d1f112b5944777/lib/puppet/configurer.rb#L211
           report = options[:report]
-require 'pry'; binding.pry
           # remember that this hash gets munged by fork's json serialising
           {
             'time' => report.time,
