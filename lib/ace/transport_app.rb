@@ -242,7 +242,7 @@ module ACE
           # Apply compiler flags for Configurer
           Puppet.settings[:noop] = body['compiler']['noop'] || false
           # grab the current debug level
-          current_log_level = Puppet.settings[:log_level]
+          current_log_level = Puppet.settings[:log_level] if body['compiler']['debug']
           # apply debug level if its specified
           Puppet.settings[:log_level] = :debug if body['compiler']['debug']
           Puppet.settings[:trace] = body['compiler']['trace'] || false

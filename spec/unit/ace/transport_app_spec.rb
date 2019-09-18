@@ -282,18 +282,29 @@ RSpec.describe ACE::TransportApp do
                                                                 ["metric name", "The Human Readable Metric Name", 666]
                                                               ]) })
     }
+    let(:psettings) { { log_level: :wibble } }
 
     before {
       allow(plugins).to receive(:with_synced_libdir).and_yield
       allow(described_class).to receive(:init_puppet_target)
+
+      allow(Puppet).to receive(:settings).and_return(psettings)
+
       allow(ACE::Configurer).to receive(:new).and_return(configurer)
       allow(configurer).to receive(:run) { |options| options[:report] = report }
     }
 
+    # rubocop:disable RSpec/MessageSpies
     describe 'success' do
       it 'returns 200 with success' do
+        expect(psettings).to receive(:[]=).with(:noop, false)
+        expect(psettings).not_to receive(:[]=).with(:log_level, :debug)
+        expect(psettings).to receive(:[]=).with(:trace, false)
+        expect(psettings).to receive(:[]=).with(:evaltrace, false)
+
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
         expect { |b| plugins.with_synced_libdir('development', false, certname, &b) }.to yield_with_no_args
+
         expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
@@ -307,6 +318,82 @@ RSpec.describe ACE::TransportApp do
                                            "transaction_uuid" => "<uuid string>" })
       end
     end
+
+    context 'when given flag debug' do
+      it 'returns 200 with success' do
+        execute_catalog_body[:compiler][:debug] = true
+
+        expect(psettings).to receive(:[]=).with(:noop, false)
+        expect(psettings).to receive(:[]=).with(:log_level, :debug)
+        expect(psettings).to receive(:[]=).with(:trace, false)
+        expect(psettings).to receive(:[]=).with(:evaltrace, false)
+
+        # handle the reset of log_level
+        expect(psettings).to receive(:[]=).with(:log_level, :wibble)
+
+        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(configurer).to have_received(:run)
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+      end
+    end
+
+    context 'when given flag noop' do
+      it 'returns 200 with success' do
+        execute_catalog_body[:compiler][:noop] = true
+
+        expect(psettings).to receive(:[]=).with(:noop, true)
+        expect(psettings).not_to receive(:[]=).with(:log_level, :debug)
+        expect(psettings).to receive(:[]=).with(:trace, false)
+        expect(psettings).to receive(:[]=).with(:evaltrace, false)
+
+        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(configurer).to have_received(:run)
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+      end
+    end
+
+    context 'when given flag trace' do
+      it 'returns 200 with success' do
+        execute_catalog_body[:compiler][:trace] = true
+
+        expect(psettings).to receive(:[]=).with(:noop, false)
+        expect(psettings).not_to receive(:[]=).with(:log_level, :debug)
+        expect(psettings).to receive(:[]=).with(:trace, true)
+        expect(psettings).to receive(:[]=).with(:evaltrace, false)
+
+        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(configurer).to have_received(:run)
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+      end
+    end
+
+    context 'when given flag evaltrace' do
+      it 'returns 200 with success' do
+        execute_catalog_body[:compiler][:evaltrace] = true
+
+        expect(psettings).to receive(:[]=).with(:noop, false)
+        expect(psettings).not_to receive(:[]=).with(:log_level, :debug)
+        expect(psettings).to receive(:[]=).with(:trace, false)
+        expect(psettings).to receive(:[]=).with(:evaltrace, true)
+
+        post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(configurer).to have_received(:run)
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+      end
+    end
+    # rubocop:enable RSpec/MessageSpies
 
     context 'when the schema is invalid' do
       let(:execute_catalog_body) do
