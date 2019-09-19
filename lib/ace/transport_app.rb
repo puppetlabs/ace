@@ -238,6 +238,16 @@ module ACE
       begin
         run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname) do
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
+
+          # Apply compiler flags for Configurer
+          Puppet.settings[:noop] = body['compiler']['noop'] || false
+          # grab the current debug level
+          current_log_level = Puppet.settings[:log_level] if body['compiler']['debug']
+          # apply debug level if its specified
+          Puppet.settings[:log_level] = :debug if body['compiler']['debug']
+          Puppet.settings[:trace] = body['compiler']['trace'] || false
+          Puppet.settings[:evaltrace] = body['compiler']['evaltrace'] || false
+
           configurer = ACE::Configurer.new(body['compiler']['transaction_uuid'], body['compiler']['job_id'])
           options = { transport_name: certname,
                       environment: environment,
@@ -245,6 +255,8 @@ module ACE
                       pluginsync: false,
                       trusted_facts: ACE::TransportApp.trusted_facts(certname) }
           configurer.run(options)
+          # return logging level back to original
+          Puppet.settings[:log_level] = current_log_level if body['compiler']['debug']
           # `options[:report]` gets populated by configurer.run with the report of the run with a
           # Puppet::Transaction::Report instance
           # see https://github.com/puppetlabs/puppet/blob/c956ad95fcdd9aabb28e196b55d1f112b5944777/lib/puppet/configurer.rb#L211

@@ -106,6 +106,13 @@ The `compiler` is a JSON object which contains parameters regarding the compilat
 * `transaction_uuid`
 * `job_id`
 
+The compiler also contains several parameters that can be used in order to help to debug your request, these being:
+
+* `noop`
+* `debug`
+* `trace`
+* `evaltrace`
+
 ### Task Object
 This is a copy of [bolt's task object](https://github.com/puppetlabs/bolt/blob/master/developer-docs/bolt-api-servers.md#task-object)
 
