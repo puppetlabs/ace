@@ -108,6 +108,7 @@ RSpec.describe ACE::TransportApp do
                                                                     extensions: {},
                                                                     hostname: "foo")
     end
+
     it 'correctly returns when cert does not contain a dot' do
       expect(described_class.trusted_facts('foodomaincom')).to eq(authenticated: "remote",
                                                                   certname: "foodomaincom",
