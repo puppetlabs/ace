@@ -141,11 +141,44 @@ RSpec.describe ACE::TransportApp do
       expect(last_response.status).to eq(400)
     end
 
+    it 'throws an ace/request_exception if the JSON is invalid' do
+      post '/run_task', 'not json', 'CONTENT_TYPE' => 'text/json'
+
+      expect(last_response.body).to match(%r{puppetlabs\/ace\/request_exception})
+      expect(last_response.status).to eq(400)
+    end
+
     it 'throws an ace/request_exception if the request is invalid JSON' do
       post '/run_task', '{ foo }', 'CONTENT_TYPE' => 'text/json'
 
       expect(last_response.body).to match(%r{puppetlabs\/ace\/request_exception})
       expect(last_response.status).to eq(400)
+    end
+
+    context 'when Bolt::Target throws' do
+      before do
+        allow(Bolt::Target).to receive(:new).and_raise Bolt::ParseError
+      end
+
+      it 'will be caught and handled by ace/execution_exception' do
+        post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(last_response.body).to match(%r{puppetlabs\/ace\/execution_exception})
+        expect(last_response.status).to eq(500)
+      end
+    end
+
+    context 'when Bolt::Inventory throws' do
+      before do
+        allow(Bolt::Inventory).to receive(:new).and_raise Exception
+      end
+
+      it 'will be caught and handled by ace/processing_exception' do
+        post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
+
+        expect(last_response.body).to match(%r{puppetlabs\/ace\/processing_exception})
+        expect(last_response.status).to eq(500)
+      end
     end
 
     context 'when the task executes cleanly' do
