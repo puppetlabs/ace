@@ -18,7 +18,7 @@ RSpec.describe ACE::FileMutex do
   end
 
   describe '#with_read_lock' do
-    it 'successfully creates a file lock' do
+    it 'successully creates a file lock' do
       foo = mutex.with_read_lock do
         lock_content
       end
@@ -83,7 +83,6 @@ RSpec.describe ACE::FileMutex do
         p1_out_read, p1_out_write = IO.pipe
         p2_in_read, _p2_in_write = IO.pipe
         p2_out_read, p2_out_write = IO.pipe
-
 
         # this should perform its operation
         fork do

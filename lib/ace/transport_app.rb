@@ -27,7 +27,9 @@ module ACE
       @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir),
                                               cache_dir_mutex: @mutex, do_purge: false).setup
       environments_cache_dir = File.join(@config['cache-dir'], 'environment_cache')
-      @plugins = ACE::PluginCache.new(environments_cache_dir).setup
+      @plugins_mutex = ACE::FileMutex.new(Tempfile.new('ace.plugins.lock'))
+      @plugins = ACE::PluginCache.new(environments_cache_dir,
+                                      cache_dir_mutex: @plugins_mutex, do_purge: false).setup
 
       @schemas = {
         "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json'))),
@@ -47,8 +49,9 @@ module ACE
       ace_pid = Process.pid
       @logger.info "ACE started: #{ace_pid}"
       fork do
-        # FileCache cleanup timer started in a seperate fork so that there is only a
-        # a single timer responsible for purging old files
+        # :nocov:
+        # FileCache and PluginCache cleanup timer started in a seperate fork
+        # so that there is only a single timer responsible for purging old files
         @logger.info "FileCache process started: #{Process.pid}"
         @fc_purge = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir),
                                               cache_dir_mutex: @mutex,
@@ -70,6 +73,7 @@ module ACE
           end
         end
         @logger.info "FileCache process ended"
+        # :nocov:
       end
 
       super(nil)
