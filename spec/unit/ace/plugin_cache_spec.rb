@@ -32,6 +32,7 @@ RSpec.describe ACE::PluginCache do
       expect(FileUtils).to have_received(:remove_dir).with('foo/environment_cache/production')
       expect(FileUtils).not_to have_received(:remove_dir).with('foo/environment_cache/bar')
     end
+
     it 'does not remove directories when nothing expired' do
       allow(File).to receive(:mtime).with('foo/environment_cache/production').and_return(Time.now)
       allow(FileUtils).to receive(:remove_dir)
@@ -51,6 +52,7 @@ RSpec.describe ACE::PluginCache do
 
     describe '#setup' do
       it { expect(plugin_cache.setup).to be_a(described_class) }
+
       it "creates the cache-dir" do
         plugin_cache.setup
         expect(FileUtils).to have_received(:mkdir_p).with('/tmp/environment_cache')

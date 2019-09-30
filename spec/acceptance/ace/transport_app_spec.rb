@@ -103,6 +103,7 @@ RSpec.describe ACE::TransportApp do
       it { expect(last_response.status).to eq(400) }
       it { expect(JSON.parse(last_response.body)['status']).to eq('failure') }
       it { expect(JSON.parse(last_response.body)['result']['_error']['kind']).to eq('puppetlabs/ace/execute_catalog') }
+
       it {
         expect(JSON.parse(last_response.body)['result']['_error']['msg']).to eq(
           'You MUST provide an `environment` when `enforce_environment` is set to true'
