@@ -19,6 +19,7 @@ require 'puppet/util/network_device/base'
 module ACE
   class TransportApp < Sinatra::Base
     def initialize(config = nil)
+      @logger = Logging.logger[self]
       @config = config
       @executor = Bolt::Executor.new(0)
       tasks_cache_dir = File.join(@config['cache-dir'], 'tasks')
@@ -42,6 +43,34 @@ module ACE
                                            config['ssl-cert'],
                                            config['cache-dir'],
                                            URI.parse(config['puppet-server-uri']))
+
+      ace_pid = Process.pid
+      @logger.info "ACE started: #{ace_pid}"
+      fork do
+        # FileCache cleanup timer started in a seperate fork so that there is only a
+        # a single timer responsible for purging old files
+        @logger.info "FileCache process started: #{Process.pid}"
+        @fc_purge = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir),
+                                              cache_dir_mutex: @mutex,
+                                              do_purge: true)
+
+        @pc_purge = ACE::PluginCache.new(environments_cache_dir,
+                                         cache_dir_mutex: @plugins_mutex, do_purge: true)
+        loop do
+          begin
+            # is the parent process alibve
+            Process.getpgid(ace_pid)
+            sleep 10 # how often to check if parent process is alive
+          rescue Interrupt
+            # handle ctrl-c event
+            break
+          rescue StandardError
+            # parent is no longer alive
+            break
+          end
+        end
+        @logger.info "FileCache process ended"
+      end
 
       super(nil)
     end
