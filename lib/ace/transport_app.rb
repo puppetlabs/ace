@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'ace/file_mutex'
 require 'ace/error'
 require 'ace/fork_util'
 require 'ace/puppet_util'
@@ -21,7 +22,9 @@ module ACE
       @config = config
       @executor = Bolt::Executor.new(0)
       tasks_cache_dir = File.join(@config['cache-dir'], 'tasks')
-      @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir)).setup
+      @mutex = ACE::FileMutex.new(Tempfile.new('ace.lock'))
+      @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir),
+                                              cache_dir_mutex: @mutex, do_purge: false).setup
       environments_cache_dir = File.join(@config['cache-dir'], 'environment_cache')
       @plugins = ACE::PluginCache.new(environments_cache_dir).setup
 
