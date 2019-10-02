@@ -6,6 +6,7 @@ require 'ace/configurer'
 require 'ace/error'
 require 'ace/transport_app'
 require 'rack/test'
+require 'puppet/resource_api/transport'
 
 RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
@@ -599,6 +600,68 @@ RSpec.describe ACE::TransportApp do
                                                   device_json['target'])).to match(/(f5_device)/)
       end
     end
+
+    describe 'success with transport connection info' do
+      device_raw = '{
+            "target": {
+                "remote-transport":"panos",
+                "host":"fw.example.net",
+                "user":"foo",
+                "password":"wibble"
+            },
+            "compiler": {
+                "certname":"fw.example.net",
+                "environment":"development",
+                "transaction_uuid":"<uuid string>",
+                "job_id":"<id string>"
+            }
+        }'
+      device_json = JSON.parse(device_raw)
+      test_hash = Hash[device_json['target'].map { |(k, v)| [k.to_sym, v] }]
+      type = test_hash[:"remote-transport"]
+      test_hash.delete(:"remote-transport")
+      it 'returns correct transport' do
+        allow(Puppet::ResourceApi::Transport).to receive(:connect)
+          .with(type, test_hash).and_return(test_hash)
+        allow(Puppet::ResourceApi::Transport).to receive(:inject_device)
+          .with(type, test_hash).and_return('panos_device')
+        expect(described_class.init_puppet_target(device_json['compiler']['certname'],
+                                                  device_json['target']['remote-transport'],
+                                                  device_json['target'])).to match(/(panos_device)/)
+      end
+    end
+
+    describe 'raise error when transport not registered' do
+      device_raw = '{
+            "target": {
+                "remote-transport":"panos",
+                "host":"fw.example.net",
+                "user":"foo",
+                "password":"wibble"
+            },
+            "compiler": {
+                "certname":"fw.example.net",
+                "environment":"development",
+                "transaction_uuid":"<uuid string>",
+                "job_id":"<id string>"
+            }
+        }'
+      device_json = JSON.parse(device_raw)
+      test_hash = Hash[device_json['target'].map { |(k, v)| [k.to_sym, v] }]
+      type = test_hash[:"remote-transport"]
+      test_hash.delete(:"remote-transport")
+
+      it 'raises the provided exception' do
+        allow(Puppet::ResourceApi::Transport).to receive(:connect)
+          .with(type, test_hash).and_raise("Transport for `#{type}` not registered with")
+        expect {
+          described_class.init_puppet_target(device_json['compiler']['certname'],
+                                             device_json['target']['remote-transport'],
+                                             device_json['target'])
+        } .to raise_error "Transport for `#{type}` not registered with"
+      end
+    end
+
     # rubocop:disable RSpec/MessageSpies
 
     describe 'raise error when invalid uri supplied' do

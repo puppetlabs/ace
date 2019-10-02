@@ -125,44 +125,47 @@ RSpec.describe ACE::TransportApp do
   ##################
   # Task Endpoint
   ##################
-  describe '/run_task' do
-    let(:task_metadata) {
-      Faraday.new(
-        url: 'https://0.0.0.0:8140/puppet/v3/tasks/test_device/device_spin?environment=production',
-        ssl: {
-          client_cert: OpenSSL::X509::Certificate.new(File.read('spec/volumes/puppet/ssl/certs/aceserver.pem')),
-          client_key: OpenSSL::PKey::RSA.new(File.read('spec/volumes/puppet/ssl/private_keys/aceserver.pem')),
-          ca_file: 'spec/volumes/puppet/ssl/certs/ca.pem'
-        }
-      )
-    }
-
-    let(:task_body) do
-      response = task_metadata.get
-      JSON.parse(response.body)
-    end
-
-    let(:run_task_body) do
-      {
-        "task": task_body,
-        "target": {
-          "remote-transport": "spinner"
-        },
-        "parameters": {
-          "cpu_time": 1,
-          "wait_time": 1
-        }
+  transports = ['spinner', 'spinner_transport']
+  transports.each do |transport|
+    describe "/run_task for #{transport}" do
+      let(:task_metadata) {
+        Faraday.new(
+          url: 'https://0.0.0.0:8140/puppet/v3/tasks/test_device/device_spin?environment=production',
+          ssl: {
+            client_cert: OpenSSL::X509::Certificate.new(File.read('spec/volumes/puppet/ssl/certs/aceserver.pem')),
+            client_key: OpenSSL::PKey::RSA.new(File.read('spec/volumes/puppet/ssl/private_keys/aceserver.pem')),
+            ca_file: 'spec/volumes/puppet/ssl/certs/ca.pem'
+          }
+        )
       }
-    end
 
-    describe 'success' do
-      it 'returns 200 with `success` status' do
-        post '/run_task', JSON.generate(run_task_body), 'CONTENT_TYPE' => 'text/json'
-        expect(last_response.errors).to match(/\A\Z/)
-        expect(last_response).to be_ok
-        expect(last_response.status).to eq(200)
-        result = JSON.parse(last_response.body)
-        expect(result['status']).to eq('success')
+      let(:task_body) do
+        response = task_metadata.get
+        JSON.parse(response.body)
+      end
+
+      let(:run_task_body) do
+        {
+          "task": task_body,
+          "target": {
+            "remote-transport": transport
+          },
+          "parameters": {
+            "cpu_time": 1,
+            "wait_time": 1
+          }
+        }
+      end
+
+      describe 'success' do
+        it 'returns 200 with `success` status' do
+          post '/run_task', JSON.generate(run_task_body), 'CONTENT_TYPE' => 'text/json'
+          expect(last_response.errors).to match(/\A\Z/)
+          expect(last_response).to be_ok
+          expect(last_response.status).to eq(200)
+          result = JSON.parse(last_response.body)
+          expect(result['status']).to eq('success')
+        end
       end
     end
   end
