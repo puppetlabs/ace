@@ -198,39 +198,85 @@ module ACE
       begin
         body = JSON.parse(request.body.read)
         validate_schema(@schemas["run_task"], body)
+        opts = body['target'].merge('protocol' => 'remote')
+
+        # This is a workaround for Bolt due to the way it expects to receive the target info
+        # see: https://github.com/puppetlabs/bolt/pull/915#discussion_r268280535
+        # Systems calling into ACE will need to determine the nodename/certname and pass this as `name`
+        target = [Bolt::Target.new(body['target']['host'] || body['target']['name'], opts)]
       rescue ACE::Error => e
-        request_error = { _error: e.to_h }
+        request_error = {
+          "node": target,
+          "target": target,
+          "action": nil,
+          "object": nil,
+          "status": "failure",
+          "result": {
+            "_error": e.to_h
+          }
+        }
+        return [400, request_error.to_json]
+      rescue JSON::ParserError => e
+        request_error = {
+          "node": target,
+          "target": target,
+          "action": nil,
+          "object": nil,
+          "status": "failure",
+          "result": {
+            "_error": ACE::Error.to_h(e.message,
+                                      'puppetlabs/ace/request_exception',
+                                      class: e.class, backtrace: e.backtrace).to_h
+          }
+        }
         return [400, request_error.to_json]
       rescue StandardError => e
         request_error = {
-          _error: ACE::Error.to_h(e.message,
-                                  'puppetlabs/ace/request_exception',
-                                  class: e.class, backtrace: e.backtrace)
+          "node": target,
+          "target": target,
+          "action": nil,
+          "object": nil,
+          "status": "failure",
+          "result": {
+            "_error": ACE::Error.to_h(e.message,
+                                      'puppetlabs/ace/execution_exception',
+                                      class: e.class, backtrace: e.backtrace).to_h
+          }
         }
-        return [400, request_error.to_json]
+        return [500, request_error.to_json]
       end
 
-      opts = body['target'].merge('protocol' => 'remote')
+      begin
+        inventory = Bolt::Inventory.new(nil)
 
-      # This is a workaround for Bolt due to the way it expects to receive the target info
-      # see: https://github.com/puppetlabs/bolt/pull/915#discussion_r268280535
-      # Systems calling into ACE will need to determine the nodename/certname and pass this as `name`
-      target = [Bolt::Target.new(body['target']['host'] || body['target']['name'], opts)]
+        target.first.inventory = inventory
 
-      inventory = Bolt::Inventory.new(nil)
+        task = Bolt::Task::PuppetServer.new(body['task'], @file_cache)
 
-      target.first.inventory = inventory
+        parameters = body['parameters'] || {}
 
-      task = Bolt::Task::PuppetServer.new(body['task'], @file_cache)
-
-      parameters = body['parameters'] || {}
-
-      result = ForkUtil.isolate do
-        # Since this will only be on one node we can just return the first result
-        results = @executor.run_task(target, task, parameters)
-        scrub_stack_trace(results.first.status_hash)
+        result = ForkUtil.isolate do
+          # Since this will only be on one node we can just return the first result
+          results = @executor.run_task(target, task, parameters)
+          scrub_stack_trace(results.first.status_hash)
+        end
+        [200, result.to_json]
+      rescue Exception => e # rubocop:disable Lint/RescueException
+        # handle all the things and make it obvious what happened
+        process_error = {
+          "node": target,
+          "target": target,
+          "action": nil,
+          "object": nil,
+          "status": "failure",
+          "result": {
+            "_error": ACE::Error.to_h(e.message,
+                                      'puppetlabs/ace/processing_exception',
+                                      class: e.class, backtrace: e.backtrace).to_h
+          }
+        }
+        return [500, process_error.to_json]
       end
-      [200, result.to_json]
     end
 
     post '/execute_catalog' do
