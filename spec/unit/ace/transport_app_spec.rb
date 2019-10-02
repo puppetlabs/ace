@@ -587,8 +587,10 @@ RSpec.describe ACE::TransportApp do
       type = test_hash[:"remote-transport"]
       test_hash.delete(:"remote-transport")
       it 'returns correct transport' do
-        allow(Puppet::ResourceApi::Transport).to receive(:connect).with(type, test_hash).and_return(test_hash)
-        allow(Puppet::ResourceApi::Transport).to receive(:inject_device).with(type, test_hash).and_return('panos_device')
+        allow(Puppet::ResourceApi::Transport).to receive(:connect)
+          .with(type, test_hash).and_return(test_hash)
+        allow(Puppet::ResourceApi::Transport).to receive(:inject_device)
+          .with(type, test_hash).and_return('panos_device')
         expect(described_class.init_puppet_target(device_json['compiler']['certname'],
                                                   device_json['target']['remote-transport'],
                                                   device_json['target'])).to match(/(panos_device)/)
