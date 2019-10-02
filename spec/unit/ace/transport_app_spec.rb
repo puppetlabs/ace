@@ -618,7 +618,8 @@ RSpec.describe ACE::TransportApp do
       test_hash.delete(:"remote-transport")
 
       it 'raises the provided exception' do
-        allow(Puppet::ResourceApi::Transport).to receive(:connect).with(type, test_hash).and_raise("Transport for `#{type}` not registered with")
+        allow(Puppet::ResourceApi::Transport).to receive(:connect)
+          .with(type, test_hash).and_raise("Transport for `#{type}` not registered with")
         expect {
           described_class.init_puppet_target(device_json['compiler']['certname'],
                                              device_json['target']['remote-transport'],
