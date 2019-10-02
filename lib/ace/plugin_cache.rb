@@ -14,14 +14,21 @@ module ACE
     PURGE_INTERVAL = 24 * PURGE_TIMEOUT
     PURGE_TTL = 7 * PURGE_INTERVAL
 
-    def initialize(environments_cache_dir)
+    def initialize(environments_cache_dir,
+                   purge_interval: PURGE_INTERVAL,
+                   purge_timeout: PURGE_TIMEOUT,
+                   purge_ttl: PURGE_TTL,
+                   cache_dir_mutex: Concurrent::ReadWriteLock.new,
+                   do_purge: true)
       @cache_dir = environments_cache_dir
-      @cache_dir_mutex = Concurrent::ReadWriteLock.new
+      @cache_dir_mutex = cache_dir_mutex
 
-      @purge = Concurrent::TimerTask.new(execution_interval: PURGE_INTERVAL,
-                                         timeout_interval: PURGE_TIMEOUT,
-                                         run_now: true) { expire(PURGE_TTL) }
-      @purge.execute
+      if do_purge
+        @purge = Concurrent::TimerTask.new(execution_interval: purge_interval,
+                                           timeout_interval: purge_timeout,
+                                           run_now: true) { expire(purge_ttl) }
+        @purge.execute
+      end
     end
 
     def setup

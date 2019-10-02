@@ -148,6 +148,43 @@ RSpec.describe ACE::PluginCache do
       expect(folder_size).to eq 1
       expect(result).to be_a(String)
     end
+
+    context 'when do_purge is false' do
+      let(:plugin_cache) { described_class.new('/tmp/environment_cache', do_purge: false) }
+
+      it 'will not set up purge timer' do
+        expect(plugin_cache.instance_variable_get(:@purge)).to be_nil
+      end
+    end
+
+    context 'when do_purge is true' do
+      let(:plugin_cache) { described_class.new('/tmp/environment_cache', do_purge: true) }
+
+      it 'will create and run the purge timer' do
+        expect(plugin_cache.instance_variable_get(:@purge)).to be_a(Concurrent::TimerTask)
+      end
+    end
+
+    context 'when do_purge is true and cache_dir_mutex is specified' do
+      let(:other_mutex) { spy('other_mutex') } # rubocop:disable RSpec/VerifiedDoubles
+      let(:plugin_cache) do
+        described_class.new('/tmp/environment_cache',
+                            purge_interval: 1,
+                            purge_timeout: 1,
+                            purge_ttl: 1,
+                            cache_dir_mutex: other_mutex,
+                            do_purge: true)
+      end
+
+      it 'will create and run the purge timer' do
+        expect(plugin_cache.instance_variable_get(:@purge)).to be_a(Concurrent::TimerTask)
+        expect(plugin_cache.instance_variable_get(:@cache_dir_mutex)).to eq(other_mutex)
+
+        plugin_cache
+        sleep 2 # allow time for the purge timer to fire
+        expect(other_mutex).to have_received(:with_write_lock).at_least(:once)
+      end
+    end
   end
 
   describe '#with_synced_libdir_core' do

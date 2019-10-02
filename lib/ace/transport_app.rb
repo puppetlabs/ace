@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'ace/file_mutex'
 require 'ace/error'
 require 'ace/fork_util'
 require 'ace/puppet_util'
@@ -18,12 +19,17 @@ require 'puppet/util/network_device/base'
 module ACE
   class TransportApp < Sinatra::Base
     def initialize(config = nil)
+      @logger = Logging.logger[self]
       @config = config
       @executor = Bolt::Executor.new(0)
       tasks_cache_dir = File.join(@config['cache-dir'], 'tasks')
-      @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir)).setup
+      @mutex = ACE::FileMutex.new(Tempfile.new('ace.lock'))
+      @file_cache = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir),
+                                              cache_dir_mutex: @mutex, do_purge: false).setup
       environments_cache_dir = File.join(@config['cache-dir'], 'environment_cache')
-      @plugins = ACE::PluginCache.new(environments_cache_dir).setup
+      @plugins_mutex = ACE::FileMutex.new(Tempfile.new('ace.plugins.lock'))
+      @plugins = ACE::PluginCache.new(environments_cache_dir,
+                                      cache_dir_mutex: @plugins_mutex, do_purge: false).setup
 
       @schemas = {
         "run_task" => JSON.parse(File.read(File.join(__dir__, 'schemas', 'ace-run_task.json'))),
@@ -39,6 +45,36 @@ module ACE
                                            config['ssl-cert'],
                                            config['cache-dir'],
                                            URI.parse(config['puppet-server-uri']))
+
+      ace_pid = Process.pid
+      @logger.info "ACE started: #{ace_pid}"
+      fork do
+        # :nocov:
+        # FileCache and PluginCache cleanup timer started in a seperate fork
+        # so that there is only a single timer responsible for purging old files
+        @logger.info "FileCache process started: #{Process.pid}"
+        @fc_purge = BoltServer::FileCache.new(@config.data.merge('cache-dir' => tasks_cache_dir),
+                                              cache_dir_mutex: @mutex,
+                                              do_purge: true)
+
+        @pc_purge = ACE::PluginCache.new(environments_cache_dir,
+                                         cache_dir_mutex: @plugins_mutex, do_purge: true)
+        loop do
+          begin
+            # is the parent process alibve
+            Process.getpgid(ace_pid)
+            sleep 10 # how often to check if parent process is alive
+          rescue Interrupt
+            # handle ctrl-c event
+            break
+          rescue StandardError
+            # parent is no longer alive
+            break
+          end
+        end
+        @logger.info "FileCache process ended"
+        # :nocov:
+      end
 
       super(nil)
     end

@@ -7,8 +7,34 @@ require 'faraday'
 require 'openssl'
 require 'rack/test'
 
+module Acceptance
+  class SUT
+    attr_reader :app
+
+    def self.app
+      base_config = {
+        "ssl-cert" => "spec/volumes/puppet/ssl/certs/aceserver.pem",
+        "ssl-key" => "spec/volumes/puppet/ssl/private_keys/aceserver.pem",
+        "ssl-ca-cert" => "spec/volumes/puppet/ssl/certs/ca.pem",
+        "ssl-ca-crls" => "spec/volumes/puppet/ssl/ca/ca_crl.pem",
+        "puppet-server-uri" => "https://0.0.0.0:8140",
+        "loglevel" => "debug",
+        "tmp-dir" => "tmp/",
+        "cache-dir" => "tmp/cache",
+        "host" => "0.0.0.0"
+      }
+      config = ACE::Config.new(base_config)
+      config.make_compatible
+      config.validate
+
+      @app ||= ACE::TransportApp.new(config)
+    end
+  end
+end
+
 RSpec.describe ACE::TransportApp do
   include Rack::Test::Methods
+  include Acceptance
 
   before do
     # see: https://github.com/bblimke/webmock#connecting-on-nethttpstart
@@ -20,24 +46,8 @@ RSpec.describe ACE::TransportApp do
   end
 
   def app
-    config = ACE::Config.new(base_config)
-    config.make_compatible
-    config.validate
-
-    ACE::TransportApp.new(config)
-  end
-
-  let(:base_config) do
-    {
-      "ssl-cert" => "spec/volumes/puppet/ssl/certs/aceserver.pem",
-      "ssl-key" => "spec/volumes/puppet/ssl/private_keys/aceserver.pem",
-      "ssl-ca-cert" => "spec/volumes/puppet/ssl/certs/ca.pem",
-      "ssl-ca-crls" => "spec/volumes/puppet/ssl/ca/ca_crl.pem",
-      "puppet-server-uri" => "https://0.0.0.0:8140",
-      "loglevel" => "debug",
-      "cache-dir" => "./tmp/",
-      "host" => "0.0.0.0"
-    }
+    # Ensure only one instance of the application runs
+    Acceptance::SUT.app
   end
 
   ##################
