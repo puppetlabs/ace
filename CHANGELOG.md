@@ -3,6 +3,32 @@
 All significant changes to this repo will be summarized in this file.
 
 
+## [v1.0.0](https://github.com/puppetlabs/ace/tree/v1.0.0) (2019-10-08)
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v0.10.0...v1.0.0)
+
+**Implemented enhancements:**
+
+- \(FM-8503\) implement transport loading if there is no device.rb shim [\#55](https://github.com/puppetlabs/ace/pull/55) ([Lavinia-Dan](https://github.com/Lavinia-Dan))
+- \(FM-8485\) - Addition of CODEOWNERS file [\#53](https://github.com/puppetlabs/ace/pull/53) ([david22swan](https://github.com/david22swan))
+- \(FM-8446\) remove remote-transport requirement [\#50](https://github.com/puppetlabs/ace/pull/50) ([DavidS](https://github.com/DavidS))
+- \(PE-27029\) introduce enforce\_environment to support strict mode [\#49](https://github.com/puppetlabs/ace/pull/49) ([DavidS](https://github.com/DavidS))
+- \(PE-27024\) return detailed results from `/execute\_catalog` [\#48](https://github.com/puppetlabs/ace/pull/48) ([DavidS](https://github.com/DavidS))
+
+**Fixed bugs:**
+
+- \(FM-8566\) Add additional error handling for /run\_task [\#60](https://github.com/puppetlabs/ace/pull/60) ([da-ar](https://github.com/da-ar))
+- \(FM-8497\) Ensure cross-process mutexing [\#59](https://github.com/puppetlabs/ace/pull/59) ([da-ar](https://github.com/da-ar))
+- \(FM-8481\) Add missing headers for native extensions [\#51](https://github.com/puppetlabs/ace/pull/51) ([da-ar](https://github.com/da-ar))
+- \\(PE-27024\\) return detailed results from `/execute\\_catalog` [\#48](https://github.com/puppetlabs/ace/pull/48) ([DavidS](https://github.com/DavidS))
+
+**Merged pull requests:**
+
+- \(maint\) rubocop fixes for RSpec/EmptyLineAfterExample [\#61](https://github.com/puppetlabs/ace/pull/61) ([da-ar](https://github.com/da-ar))
+- \(FM-8496\) Add support for Puppet debug flags during /execute\_catalog [\#58](https://github.com/puppetlabs/ace/pull/58) ([david22swan](https://github.com/david22swan))
+- \(maint\) Do not follow spec test found in `Volumes` [\#56](https://github.com/puppetlabs/ace/pull/56) ([da-ar](https://github.com/da-ar))
+- \(maint\) various cleanups [\#52](https://github.com/puppetlabs/ace/pull/52) ([DavidS](https://github.com/DavidS))
+- \(maint\) using the CA\_ALLOW\_SUBJECT\_ALT\_NAMES env variable for new doc… [\#47](https://github.com/puppetlabs/ace/pull/47) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
+
 ## [v0.10.0](https://github.com/puppetlabs/ace/tree/v0.10.0) (2019-07-25)
 [Full Changelog](https://github.com/puppetlabs/ace/compare/v0.9.1...v0.10.0)
 
@@ -31,6 +57,8 @@ All significant changes to this repo will be summarized in this file.
 - \(FM-7927\) Docs review [\#35](https://github.com/puppetlabs/ace/pull/35) ([clairecadman](https://github.com/clairecadman))
 
 ## [v0.9.0](https://github.com/puppetlabs/ace/tree/v0.9.0) (2019-04-16)
+[Full Changelog](https://github.com/puppetlabs/ace/compare/0.1.0...v0.9.0)
+
 **Implemented enhancements:**
 
 - \(FM-7922\) running the configuration to apply catalog to transport  [\#30](https://github.com/puppetlabs/ace/pull/30) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
@@ -39,8 +67,6 @@ All significant changes to this repo will be summarized in this file.
 - \(FM-7883\) execute plugin sync from a puppetserver [\#20](https://github.com/puppetlabs/ace/pull/20) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
 - \(FM-7826\) first pass of execute catalog docs and mock API endpoint [\#16](https://github.com/puppetlabs/ace/pull/16) ([DavidS](https://github.com/DavidS))
 - Utilities for environment isolation per request [\#12](https://github.com/puppetlabs/ace/pull/12) ([willmeek](https://github.com/willmeek))
-- \(PE-25514\) Add docker support for ACE [\#3](https://github.com/puppetlabs/ace/pull/3) ([da-ar](https://github.com/da-ar))
-- \(PE-25508\) Add JSON Schema and validation example [\#2](https://github.com/puppetlabs/ace/pull/2) ([da-ar](https://github.com/da-ar))
 
 **Fixed bugs:**
 
@@ -64,6 +90,15 @@ All significant changes to this repo will be summarized in this file.
 - Update README.md [\#10](https://github.com/puppetlabs/ace/pull/10) ([willmeek](https://github.com/willmeek))
 - \(maint\) reworking of the configuration [\#5](https://github.com/puppetlabs/ace/pull/5) ([Thomas-Franklin](https://github.com/Thomas-Franklin))
 - Update JSONSchema, and mock endpoint [\#4](https://github.com/puppetlabs/ace/pull/4) ([da-ar](https://github.com/da-ar))
+
+## [0.1.0](https://github.com/puppetlabs/ace/tree/0.1.0) (2018-11-30)
+**Implemented enhancements:**
+
+- \(PE-25514\) Add docker support for ACE [\#3](https://github.com/puppetlabs/ace/pull/3) ([da-ar](https://github.com/da-ar))
+- \(PE-25508\) Add JSON Schema and validation example [\#2](https://github.com/puppetlabs/ace/pull/2) ([da-ar](https://github.com/da-ar))
+
+**Merged pull requests:**
+
 - \(PE-25509\) first fake endpoint; rubocop [\#1](https://github.com/puppetlabs/ace/pull/1) ([DavidS](https://github.com/DavidS))
 
 
