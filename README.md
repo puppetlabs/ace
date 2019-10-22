@@ -2,7 +2,9 @@
 
 ## App Overview
 
-The Agentless Catalog Executor (ACE) provides agentless executions services for tasks and catalogs to Puppet Enterprise (PE). See [developer-docs/api](developer-docs/api.md) for an API spec. See below for development info.
+The Agentless Catalog Executor (ACE) provides agentless executions services for tasks and catalogs to Puppet Enterprise (PE). See [developer-docs/api](developer-docs/api.md) for an API spec. 
+
+See below for development info.
 
 ## Code Overview
 
