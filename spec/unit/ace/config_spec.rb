@@ -52,6 +52,7 @@ RSpec.describe ACE::Config do
                               'ECDHE-ECDSA-AES128-SHA256',
                               'ECDHE-RSA-AES128-SHA256'],
       'port' => 44633,
+      'status-port' => 44632,
       'concurrency' => 10,
       'cache-dir' => "/opt/puppetlabs/server/data/ace-server/cache",
       'puppet-server-conn-timeout' => 120,

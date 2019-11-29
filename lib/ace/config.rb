@@ -25,6 +25,7 @@ module ACE
     def defaults
       super.merge(
         'port' => 44633,
+        'status-port' => 44632,
         'concurrency' => 10,
         'cache-dir' => "/opt/puppetlabs/server/data/ace-server/cache",
         'puppet-server-conn-timeout' => 120,

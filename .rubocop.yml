@@ -37,7 +37,7 @@ Style/NumericPredicate:
 Layout/EmptyLineAfterGuardClause:
   Enabled: false
 
-Layout/IndentHeredoc:
+Layout/HeredocIndentation:
   Enabled: false
 
 Layout/ClosingHeredocIndentation:
