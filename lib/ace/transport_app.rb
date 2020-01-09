@@ -198,6 +198,11 @@ module ACE
     get '/admin/gc_stat' do
       [200, GC.stat.to_json]
     end
+
+    get '/admin/status' do
+      stats = Puma.stats
+      [200, stats.is_a?(Hash) ? stats.to_json : stats]
+    end
     # :nocov:
 
     # run this with "curl -X POST http://0.0.0.0:44633/run_task -d '{}'"
