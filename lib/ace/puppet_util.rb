@@ -4,7 +4,18 @@ require 'openssl'
 
 module ACE
   class PuppetUtil
+    def self.certificate_revocation
+      @certificate_revocation ||= begin
+        Puppet.initialize_settings
+        result = Puppet[:certificate_revocation]
+        Puppet.clear
+        result
+      end
+    end
+
     def self.init_global_settings(ca_cert_path, ca_crls_path, private_key_path, client_cert_path, cachedir, uri)
+      revocation = certificate_revocation
+
       Puppet::Util::Log.destinations.clear
       Puppet::Util::Log.newdestination(:console)
       Puppet.settings[:log_level] = 'notice'
@@ -33,7 +44,8 @@ module ACE
         cacerts: cert_provider.load_cacerts(required: true),
         crls: cert_provider.load_crls(required: true),
         private_key: OpenSSL::PKey::RSA.new(File.read(private_key_path, encoding: 'utf-8')),
-        client_cert: OpenSSL::X509::Certificate.new(File.read(client_cert_path, encoding: 'utf-8'))
+        client_cert: OpenSSL::X509::Certificate.new(File.read(client_cert_path, encoding: 'utf-8')),
+        revocation: revocation
       )
       # Store SSL settings for reuse in isolated process
       @ssl_settings = {
