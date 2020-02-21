@@ -2,6 +2,9 @@
 
 All significant changes to this repo will be summarized in this file.
 
+## [v1.1.1](https://github.com/puppetlabs/ace/tree/v1.1.1) (2020-02-21)
+
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v1.1.0...v1.1.1)
 
 ## [v1.1.0](https://github.com/puppetlabs/ace/tree/v1.1.0) (2020-01-17)
 
