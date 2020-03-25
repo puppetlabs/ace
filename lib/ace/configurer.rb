@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+require 'puppet'
+# NOTE: Changes in puppet code loading results in simply requiring `puppet/configurer` no longer
+# possible. The following requires can make ruby load, however selectively loading code from puppet
+# will likely lead to issues in the future. Instead, just load puppet here.
+# require 'puppet/util/autoload'
+# require 'puppet/parser/compiler'
+# require 'puppet/parser'
 require 'puppet/configurer'
 
 module ACE

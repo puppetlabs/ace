@@ -66,6 +66,9 @@ module ACE
       Puppet.settings[:logdir] = File.join(environment_dir, 'log')
       Puppet.settings[:codedir] = File.join(environment_dir, 'code')
       Puppet.settings[:plugindest] = File.join(environment_dir, 'plugins')
+      # With puppet 6.14.0 resolvers no longer set :server for pluginfact download, explicitly set them here
+      Puppet.settings[:server] = @ssl_settings[:server]
+      Puppet.settings[:masterport] = @ssl_settings[:serverport]
 
       # establish a base_context. This needs to be the first context on the stack, but must not be created
       # before all settings have been set. For example, this will create a Puppet::Environments::Directories

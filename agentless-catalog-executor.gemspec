@@ -20,7 +20,10 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "bolt", "~> 1.31"
+  # Pin concurrent-ruby to 1.1.5 until https://github.com/ruby-concurrency/concurrent-ruby/pull/856 is released
+  spec.add_dependency "concurrent-ruby", "1.1.5"
+  # TODO: migrate to bolt 2.x
+  spec.add_dependency "bolt",  "~> 1.31"
 
   # server-side dependencies cargo culted from https://github.com/puppetlabs/bolt/blob/4418da408643aa7eb5ed64f4c9704b941ea878dc/Gemfile#L10-L16
   spec.add_dependency "hocon", ">= 1.2.5"
@@ -33,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", ">= 1.16", "< 3.0.0"
   spec.add_development_dependency "faraday"
   spec.add_development_dependency "rack-test", "~> 1.0"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "rake", "~>  13.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "rubocop", "~> 0.50"
 end
