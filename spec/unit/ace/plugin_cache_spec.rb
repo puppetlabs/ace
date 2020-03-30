@@ -27,9 +27,11 @@ RSpec.describe ACE::PluginCache do
     it 'removes only directories which have expired' do
       allow(File).to receive(:mtime).with('foo/environment_cache/production').and_return(Time.now -
                                                                                     (ACE::PluginCache::PURGE_TTL + 100))
+
       allow(FileUtils).to receive(:remove_dir)
-      described_class.new('foo/environment_cache')
-      expect(FileUtils).to have_received(:remove_dir).with('foo/environment_cache/production')
+      described_class.new('foo/environment_cache', purge_interval: 1)
+      sleep 1
+      expect(FileUtils).to have_received(:remove_dir).with('foo/environment_cache/production').at_most(2).times
       expect(FileUtils).not_to have_received(:remove_dir).with('foo/environment_cache/bar')
     end
 
