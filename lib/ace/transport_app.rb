@@ -137,13 +137,20 @@ module ACE
     end
 
     def scrub_stack_trace(result)
-      if result.dig(:result, '_error', 'details', 'stack_trace')
-        result[:result]['_error']['details'].reject! { |k| k == 'stack_trace' }
+      if result.dig(:value, '_error', 'details', 'stack_trace')
+        result[:value]['_error']['details'].reject! { |k| k == 'stack_trace' }
       end
-      if result.dig(:result, '_error', 'details', 'backtrace')
-        result[:result]['_error']['details'].reject! { |k| k == 'backtrace' }
+      if result.dig(:value, '_error', 'details', 'backtrace')
+        result[:value]['_error']['details'].reject! { |k| k == 'backtrace' }
       end
       result
+    end
+
+    def error_result(error)
+      {
+        'status' => 'failure',
+        'value' => { '_error' => error.to_h }
+      }
     end
 
     def validate_schema(schema, body)
@@ -212,59 +219,33 @@ module ACE
       begin
         body = JSON.parse(request.body.read)
         validate_schema(@schemas["run_task"], body)
-        opts = body['target'].merge('protocol' => 'remote')
 
-        # This is a workaround for Bolt due to the way it expects to receive the target info
-        # see: https://github.com/puppetlabs/bolt/pull/915#discussion_r268280535
-        # Systems calling into ACE will need to determine the nodename/certname and pass this as `name`
-        target = [Bolt::Target.new(body['target']['host'] || body['target']['name'], opts)]
+        inventory = Bolt::Inventory.empty
+        target_data = {
+          'name' => body['target']['host'] || body['target']['name'] || 'remote',
+          'config' => {
+            'transport' => 'remote',
+            'remote' => body['target']
+          }
+        }
+        target = [Bolt::Target.from_hash(target_data, inventory)]
       rescue ACE::Error => e
-        request_error = {
-          "node": target,
-          "target": target,
-          "action": nil,
-          "object": nil,
-          "status": "failure",
-          "result": {
-            "_error": e.to_h
-          }
-        }
-        return [400, request_error.to_json]
+        return [400, error_result(e).to_json]
       rescue JSON::ParserError => e
-        request_error = {
-          "node": target,
-          "target": target,
-          "action": nil,
-          "object": nil,
-          "status": "failure",
-          "result": {
-            "_error": ACE::Error.to_h(e.message,
-                                      'puppetlabs/ace/request_exception',
-                                      class: e.class, backtrace: e.backtrace).to_h
-          }
-        }
-        return [400, request_error.to_json]
+        request_error = ACE::Error.new(e.message,
+                                       'puppetlabs/ace/request_exception',
+                                       class: e.class, backtrace: e.backtrace).to_h
+
+        return [400, error_result(request_error).to_json]
       rescue StandardError => e
-        request_error = {
-          "node": target,
-          "target": target,
-          "action": nil,
-          "object": nil,
-          "status": "failure",
-          "result": {
-            "_error": ACE::Error.to_h(e.message,
-                                      'puppetlabs/ace/execution_exception',
-                                      class: e.class, backtrace: e.backtrace).to_h
-          }
-        }
-        return [500, request_error.to_json]
+        request_error = ACE::Error.new(e.message,
+                                       'puppetlabs/ace/execution_exception',
+                                       class: e.class, backtrace: e.backtrace).to_h
+
+        return [500, error_result(request_error).to_json]
       end
 
       begin
-        inventory = Bolt::Inventory.new(nil)
-
-        target.first.inventory = inventory
-
         task_data = body['task']
         task = Bolt::Task::PuppetServer.new(task_data['name'], task_data['metadata'], task_data['files'], @file_cache)
 
@@ -279,15 +260,14 @@ module ACE
       rescue Exception => e # rubocop:disable Lint/RescueException
         # handle all the things and make it obvious what happened
         process_error = {
-          "node": target,
-          "target": target,
+          "target": target.name,
           "action": nil,
           "object": nil,
           "status": "failure",
-          "result": {
-            "_error": ACE::Error.to_h(e.message,
-                                      'puppetlabs/ace/processing_exception',
-                                      class: e.class, backtrace: e.backtrace).to_h
+          "value": {
+            "_error": ACE::Error.new(e.message,
+                                     'puppetlabs/ace/processing_exception',
+                                     class: e.class, backtrace: e.backtrace).to_h
           }
         }
         return [500, process_error.to_json]
@@ -324,9 +304,9 @@ module ACE
         request_error = {
           status: 'failure',
           result: {
-            _error: ACE::Error.to_h(e.message,
-                                    'puppetlabs/ace/request_exception',
-                                    class: e.class, backtrace: e.backtrace)
+            _error: ACE::Error.new(e.message,
+                                   'puppetlabs/ace/request_exception',
+                                   class: e.class, backtrace: e.backtrace)
           }
         }
         return [400, request_error.to_json]
@@ -382,9 +362,9 @@ module ACE
           certname: certname,
           status: 'failure',
           result: {
-            _error: ACE::Error.to_h(e.message,
-                                    'puppetlabs/ace/processing_exception',
-                                    class: e.class, backtrace: e.backtrace).to_h
+            _error: ACE::Error.new(e.message,
+                                   'puppetlabs/ace/processing_exception',
+                                   class: e.class, backtrace: e.backtrace).to_h
           }
         }
         return [500, process_error.to_json]

@@ -32,7 +32,7 @@ RSpec.describe ACE::TransportApp do
     {
       node: "fw.example.net",
       status: "success",
-      result: {
+      value: {
         "output" => "Hello!"
       }
     }
@@ -171,13 +171,13 @@ RSpec.describe ACE::TransportApp do
 
     context 'when Bolt::Inventory throws' do
       before do
-        allow(Bolt::Inventory).to receive(:new).and_raise Exception
+        allow(Bolt::Inventory).to receive(:empty).and_raise(StandardError.new('yeah right'))
       end
 
       it 'will be caught and handled by ace/processing_exception' do
         post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
 
-        expect(last_response.body).to match(%r{puppetlabs\/ace\/processing_exception})
+        expect(last_response.body).to match(%r{puppetlabs\/ace\/execution_exception})
         expect(last_response.status).to eq(500)
       end
     end
@@ -191,7 +191,7 @@ RSpec.describe ACE::TransportApp do
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
         expect(result).to include('status' => 'success')
-        expect(result['result']['output']).to eq('Hello!')
+        expect(result['value']['output']).to eq('Hello!')
       end
     end
 
@@ -212,7 +212,7 @@ RSpec.describe ACE::TransportApp do
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
         expect(result).to include('status' => 'success')
-        expect(result['result']['output']).to eq('Hello!')
+        expect(result['value']['output']).to eq('Hello!')
       end
     end
 
@@ -221,7 +221,7 @@ RSpec.describe ACE::TransportApp do
         {
           node: "fw.example.net",
           status: "failure",
-          result: {
+          value: {
             '_error' => {
               'msg' => 'Failed to open TCP connection to fw.example.net',
               'kind' => 'module/unknown',
@@ -251,7 +251,7 @@ RSpec.describe ACE::TransportApp do
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
         expect(result).to include('status' => 'failure')
-        expect(result['result']['_error']).not_to have_key('backtrace')
+        expect(result['value']['_error']).not_to have_key('backtrace')
       end
     end
 
@@ -260,7 +260,7 @@ RSpec.describe ACE::TransportApp do
         {
           node: "fw.example.net",
           status: "failure",
-          result: {
+          value: {
             '_error' => {
               'msg' => 'Failed to open TCP connection to fw.example.net',
               'kind' => 'module/unknown',
@@ -290,7 +290,7 @@ RSpec.describe ACE::TransportApp do
         expect(last_response.status).to eq(200)
         result = JSON.parse(last_response.body)
         expect(result).to include('status' => 'failure')
-        expect(result['result']['_error']).not_to have_key('stack_trace')
+        expect(result['value']['_error']).not_to have_key('stack_trace')
       end
     end
   end

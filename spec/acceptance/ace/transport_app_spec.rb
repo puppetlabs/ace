@@ -160,6 +160,7 @@ RSpec.describe ACE::TransportApp do
       describe 'success' do
         it 'returns 200 with `success` status' do
           post '/run_task', JSON.generate(run_task_body), 'CONTENT_TYPE' => 'text/json'
+
           expect(last_response.errors).to match(/\A\Z/)
           expect(last_response).to be_ok
           expect(last_response.status).to eq(200)
