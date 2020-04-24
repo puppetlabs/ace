@@ -1,6 +1,6 @@
 require: rubocop-rspec
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.5
   Exclude:
     - 'vendor/**/*'
     - 'vendored/**/*'
@@ -33,6 +33,9 @@ Style/NumericLiterals:
   Enabled: false
 
 Style/NumericPredicate:
+  Enabled: false
+
+Style/RedundantBegin:
   Enabled: false
 
 Layout/EmptyLineAfterGuardClause:
