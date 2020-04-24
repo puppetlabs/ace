@@ -1,0 +1,17 @@
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment, dataEncipherment, keyAgreement
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names
+
+[ alt_names ]
+DNS.1 = localhost 
+DNS.2 = aceserver
+DNS.3 = ace_aceserver_1
+DNS.4 = spec_puppetserver_1
+DNS.5 = ace_server
+DNS.6 = puppet_server
+DNS.7 = spec_aceserver_1
+DNS.8 = puppetdb
+DNS.9 = spec_puppetdb_1
+DNS.9 = 0.0.0.0
