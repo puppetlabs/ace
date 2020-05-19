@@ -11,5 +11,5 @@ before_install:
   - docker network create spec_default
   - docker-compose -f ./spec/docker-compose.yml up -d --build
   - docker ps -a
-  - while true; do echo Checking...; echo $(docker logs spec_puppet_1 --tail 10) | grep -q 'Puppet Server has successfully started' && break; sleep 1; done ;
+  - i="0"; while true; do echo Checking...; echo $(docker logs spec_puppet_1 --tail 10) | grep -q 'Puppet Server has successfully started' && break; if [ $i -gt 90 ]; then exit 1; fi; sleep 1; i=$[$i+1]; done;
   - docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names 'puppet,localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0'
