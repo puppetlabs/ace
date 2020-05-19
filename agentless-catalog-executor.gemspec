@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
   # Pin concurrent-ruby to 1.1.5 until https://github.com/ruby-concurrency/concurrent-ruby/pull/856 is released
   spec.add_dependency "concurrent-ruby", "1.1.5"
 
-  spec.add_dependency "bolt",  "~> 2.0"
+  spec.add_dependency "bolt",  "~> 2.9"
 
   # server-side dependencies cargo culted from https://github.com/puppetlabs/bolt/blob/4418da408643aa7eb5ed64f4c9704b941ea878dc/Gemfile#L10-L16
   spec.add_dependency "hocon", ">= 1.2.5"

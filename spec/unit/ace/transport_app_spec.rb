@@ -132,7 +132,7 @@ RSpec.describe ACE::TransportApp do
       ).and_return(task_response)
 
       allow(task_response).to receive(:first).and_return(response)
-      allow(response).to receive(:status_hash).and_return(status)
+      allow(response).to receive(:to_data).and_return(status)
     end
 
     it 'throws an ace/schema_error if the request is invalid' do
