@@ -137,11 +137,11 @@ module ACE
     end
 
     def scrub_stack_trace(result)
-      if result.dig(:value, '_error', 'details', 'stack_trace')
-        result[:value]['_error']['details'].reject! { |k| k == 'stack_trace' }
+      if result.dig('value', '_error', 'details', 'stack_trace')
+        result['value']['_error']['details'].reject! { |k| k == 'stack_trace' }
       end
-      if result.dig(:value, '_error', 'details', 'backtrace')
-        result[:value]['_error']['details'].reject! { |k| k == 'backtrace' }
+      if result.dig('value', '_error', 'details', 'backtrace')
+        result['value']['_error']['details'].reject! { |k| k == 'backtrace' }
       end
       result
     end
@@ -254,13 +254,13 @@ module ACE
         result = ForkUtil.isolate do
           # Since this will only be on one node we can just return the first result
           results = @executor.run_task(target, task, parameters)
-          scrub_stack_trace(results.first.status_hash)
+          scrub_stack_trace(results.first.to_data)
         end
         [200, result.to_json]
       rescue Exception => e # rubocop:disable Lint/RescueException
         # handle all the things and make it obvious what happened
         process_error = {
-          "target": target.name,
+          "target": target.first.name,
           "action": nil,
           "object": nil,
           "status": "failure",
