@@ -1,6 +1,13 @@
 # Changelog
 
 All significant changes to this repo will be summarized in this file.
+## [v1.2.0](https://github.com/puppetlabs/ace/tree/v1.2.0) (2020-06-11)
+
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v1.1.1...v1.2.0)
+
+**Implemented enhancements:**
+
+- \(PE-29007\) add a puma status endpoint [\#75](https://github.com/puppetlabs/ace/pull/75) ([donoghuc](https://github.com/donoghuc))
 
 ## [v1.1.1](https://github.com/puppetlabs/ace/tree/v1.1.1) (2020-02-21)
 
