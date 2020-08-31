@@ -107,3 +107,7 @@ Lint/AmbiguousBlockAssociation:
 RSpec/NestedGroups:
   Enabled: true
   Max: 5
+
+# TODO: do we refactor? 
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
