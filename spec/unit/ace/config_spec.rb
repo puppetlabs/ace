@@ -19,7 +19,7 @@ RSpec.describe ACE::Config do
 
   let(:complete_config_keys) {
     ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
-     'ssl-cipher-suites', 'loglevel', 'logfile', 'whitelist',
+     'ssl-cipher-suites', 'loglevel', 'logfile', 'allowlist', 'projects-dir',
      'concurrency', 'cache-dir', 'puppet-server-conn-timeout',
      'puppet-server-uri', 'ssl-ca-crls'].freeze
   }
@@ -40,7 +40,7 @@ RSpec.describe ACE::Config do
 
   let(:complete_defaults) {
     { 'host' => '127.0.0.1',
-      'loglevel' => 'notice',
+      'loglevel' => 'warn',
       'ssl-cipher-suites' => ['ECDHE-ECDSA-AES256-GCM-SHA384',
                               'ECDHE-RSA-AES256-GCM-SHA384',
                               'ECDHE-ECDSA-CHACHA20-POLY1305',
