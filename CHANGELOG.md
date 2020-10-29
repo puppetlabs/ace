@@ -1,6 +1,16 @@
 # Changelog
 
 All significant changes to this repo will be summarized in this file.
+
+## [v1.2.1](https://github.com/puppetlabs/ace/tree/v1.2.1) (2020-10-28)
+
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v1.2.0...v1.2.1)
+
+**Implemented enhancements:**
+
+- \(PE-30044\) remove harmful terminology from ace [\#79](https://github.com/puppetlabs/ace/pull/79) ([barriserloth](https://github.com/barriserloth))
+
+
 ## [v1.2.0](https://github.com/puppetlabs/ace/tree/v1.2.0) (2020-06-11)
 
 [Full Changelog](https://github.com/puppetlabs/ace/compare/v1.1.1...v1.2.0)
