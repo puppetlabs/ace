@@ -2,6 +2,13 @@
 
 All significant changes to this repo will be summarized in this file.
 
+## [v1.2.2](https://github.com/puppetlabs/ace/tree/v1.2.2) (2021-02-12)
+
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v1.2.1...v1.2.2)
+
+- \(PE-31081\) Allow bolt >= 2.9
+
+
 ## [v1.2.1](https://github.com/puppetlabs/ace/tree/v1.2.1) (2020-10-28)
 
 [Full Changelog](https://github.com/puppetlabs/ace/compare/v1.2.0...v1.2.1)
