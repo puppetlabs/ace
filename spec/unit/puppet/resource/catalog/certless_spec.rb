@@ -5,16 +5,14 @@ require 'puppet'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/rest'
 require 'puppet/indirector/catalog/certless'
+require 'puppet/http/response'
 
 RSpec.describe Puppet::Resource::Catalog::Certless do
   let(:indirector) { described_class.new }
 
   let(:request) { instance_double(Puppet::Indirector::Request, 'request') }
   let(:environment) { instance_double(Puppet::Node::Environment::Remote, 'environment') }
-  let(:response_ok) { instance_double(Net::HTTPOK, 'response_ok') }
-  let(:ssl_context) { instance_double(Puppet::SSL::SSLContext, 'ssl_context') }
-  let(:http_pool) { instance_double(Puppet::Network::HTTP::NoCachePool, 'http_pool') }
-  let(:http_connection) { instance_double(Puppet::Network::HTTP::Connection, 'http_connection') }
+  let(:puppet_server_response) { instance_double(Puppet::HTTP::Response, 'puppet_server_response') }
   let(:request_options) do
     {
       transport_facts: {
@@ -90,34 +88,25 @@ RSpec.describe Puppet::Resource::Catalog::Certless do
       allow(request).to receive(:server).and_return('localhost')
       allow(request).to receive(:port).and_return('9999')
       allow(environment).to receive(:name).and_return('environment')
+      # TODO: Instead of investing in properly mocking this out, instead short circuit here
+      # and wait for the refactor of the inderector #find method to use a new method in puppet
       allow(request).to receive(:do_request) do |_, &block|
-        block.call(request, '/foo', request_options.to_json, headers)
+        puppet_server_response
       end
-      allow(Puppet).to receive(:lookup).with(:server).and_return('localhost')
-      allow(Puppet).to receive(:lookup).with(:serverport).and_return('9999')
-      allow(Puppet).to receive(:lookup).with(:http_pool).and_return(http_pool)
-      allow(Puppet).to receive(:lookup).with(:ssl_context).and_return(ssl_context)
-      allow(Puppet).to receive(:lookup).with(:ssl_agent_version).and_return('6.4.0')
-      allow(Puppet).to receive(:lookup).with(:server_agent_version).and_return('6.4.0')
-      allow(http_pool).to receive(:with_connection) do |_, &block|
-        block.call(http_connection)
-      end
-      allow(http_connection).to receive(:request).and_return(response_ok)
-      allow(response_ok).to receive(:message).and_return('ok')
-      allow(response_ok).to receive(:[]).with('X-Puppet-Version').and_return('6.4.0')
-      allow(response_ok).to receive(:[]).with('content-type').and_return('application/json')
-      allow(response_ok).to receive(:[]).with('content-encoding')
+      allow(puppet_server_response).to receive(:[]).with('X-Puppet-Version').and_return('6.4.0')
+      allow(puppet_server_response).to receive(:[]).with('content-type').and_return('application/json')
+      allow(puppet_server_response).to receive(:[]).with('content-encoding')
     end
 
     it 'returns a Puppet Catalog on success' do
-      allow(response_ok).to receive(:code).and_return('200')
-      allow(response_ok).to receive(:body).and_return(response_success_body.to_json)
+      allow(puppet_server_response).to receive(:code).and_return('200')
+      allow(puppet_server_response).to receive(:body).and_return(response_success_body.to_json)
       expect(indirector.find(request)).to be_a Puppet::Resource::Catalog
     end
 
     it 'raises error on a 404' do
-      allow(response_ok).to receive(:code).and_return('404')
-      allow(response_ok).to receive(:body).and_return(response_error_body.to_json)
+      allow(puppet_server_response).to receive(:code).and_return('404')
+      allow(puppet_server_response).to receive(:body).and_return(response_error_body.to_json)
       expect { indirector.find(request) }.to raise_error(Puppet::Error, 'Find /puppet/v4/catalog '\
                                                                         'resulted in 404 with the message: "404"')
     end
