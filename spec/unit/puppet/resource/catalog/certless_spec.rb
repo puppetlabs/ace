@@ -11,14 +11,16 @@ RSpec.describe Puppet::Resource::Catalog::Certless do
   let(:indirector) { described_class.new }
 
   let(:request) { instance_double(Puppet::Indirector::Request, 'request') }
+  let(:session) { instance_double(Puppet::HTTP::Session, 'session') }
+  let(:compiler) { instance_double(Puppet::HTTP::Service::Compiler, 'compiler') }
   let(:environment) { instance_double(Puppet::Node::Environment::Remote, 'environment') }
-  let(:puppet_server_response) { instance_double(Puppet::HTTP::Response, 'puppet_server_response') }
+
   let(:request_options) do
     {
       transport_facts: {
-        "clientcert" => "foo.delivery.puppetlabs.net",
-        "clientversion" => "6.4.0",
-        "clientnoop" => false
+        clientcert: "foo.delivery.puppetlabs.net",
+        clientversion: "6.4.0",
+        clientnoop: false
       },
       trusted_facts: {
         authenticated: "remote",
@@ -32,83 +34,86 @@ RSpec.describe Puppet::Resource::Catalog::Certless do
       job_id: "271036342116034393375846637943780463672"
     }
   end
-  let(:headers) do
+
+  let(:certname) { 'foo.delivery.puppetlabs.net' }
+  let(:persistence) { { facts: true, catalog: true } }
+  let(:facts) {
     {
-      'Content-Type' => 'text/json',
-      'X-Puppet-Version' => '6.4.0',
-      'Accept' => 'application/json'
+      clientcert: 'foo.delivery.puppetlabs.net',
+      clientnoop: false,
+      clientversion: '6.4.0'
     }
-  end
-  let(:response_success_body) do
+  }
+
+  let(:trusted_facts) {
     {
-      "catalog": {
-        "tags": [
-          "settings",
-          "foo.delivery.puppetlabs.net",
-          "node"
-        ],
-        "name": "foo.delivery.puppetlabs.net",
-        "version": 1554885119,
-        "catalog_uuid": "0ee685b8-0802-4a2f-94a8-077abd65880d",
-        "catalog_format": 1,
-        "environment": "production",
-        "resources": [],
-        "edges": [],
-        "classes": [
-          "settings",
-          "foo.delivery.puppetlabs.net"
-        ]
+      authenticated: 'remote',
+      certname: 'foo.delivery.puppetlabs.net',
+      domain: 'delivery.puppetlabs.net',
+      extensions: {},
+      hostname: 'foo'
+    }
+  }
+
+  let(:opts) {
+    {
+      persistence: persistence,
+      environment: environment.name,
+      facts: facts,
+      trusted_facts: trusted_facts,
+      transaction_uuid: '2078748407702309438222210184383400900',
+      job_id: '271036342116034393375846637943780463672',
+      options: {
+        prefer_requested_environment: false,
+        capture_logs: false
       }
     }
-  end
+  }
 
-  let(:response_error_body) do
-    "404"
-  end
-
-  describe '#headers' do
-    before do
-      allow(Puppet).to receive(:version).and_return('6.4.1')
-    end
-
-    it { expect(indirector.headers['Content-Type']).to eq 'text/json' }
-    it { expect(indirector.headers['Accept']).to eq 'application/json' }
-    it { expect(indirector.headers['X-Puppet-Version']).to eq '6.4.1' }
-    it { expect(indirector.headers['accept-encoding']).to be_a String }
-    it { expect(indirector.headers).to include('Content-Type', 'Accept', 'X-Puppet-Version', 'accept-encoding') }
-  end
+  let(:uri) { URI.parse('https://www.example.com') }
 
   describe '#find' do
     before do
-      # all this set up is just to mock the
-      # puppet api - yes it is horrendous
       allow(request).to receive(:key).and_return('foo.delivery.puppetlabs.net')
       allow(request).to receive(:environment).and_return(environment)
       allow(request).to receive(:options).and_return(request_options)
       allow(request).to receive(:server).and_return('localhost')
       allow(request).to receive(:port).and_return('9999')
       allow(environment).to receive(:name).and_return('environment')
-      # TODO: Instead of investing in properly mocking this out, instead short circuit here
-      # and wait for the refactor of the inderector #find method to use a new method in puppet
-      allow(request).to receive(:do_request) do |_|
-        puppet_server_response
-      end
-      allow(puppet_server_response).to receive(:[]).with('X-Puppet-Version').and_return('6.4.0')
-      allow(puppet_server_response).to receive(:[]).with('content-type').and_return('application/json')
-      allow(puppet_server_response).to receive(:[]).with('content-encoding')
+
+      allow(Puppet).to receive(:lookup).with(:http_session).and_return(session)
+      allow(session).to receive(:route_to).with(:puppet).and_return(compiler)
     end
 
     it 'returns a Puppet Catalog on success' do
-      allow(puppet_server_response).to receive(:code).and_return('200')
-      allow(puppet_server_response).to receive(:body).and_return(response_success_body.to_json)
+      expected_post4_args = [certname, opts]
+      mocked_post4_return = [nil, Puppet::Resource::Catalog.new('foo.delivery.puppetlabs.net'), []]
+
+      allow(compiler).to receive(:post_catalog4)
+        .with(*expected_post4_args)
+        .and_return(mocked_post4_return)
+
       expect(indirector.find(request)).to be_a Puppet::Resource::Catalog
+
+      expect(compiler).to have_received(:post_catalog4)
+        .with(*expected_post4_args)
     end
 
     it 'raises error on a 404' do
-      allow(puppet_server_response).to receive(:code).and_return('404')
-      allow(puppet_server_response).to receive(:body).and_return(response_error_body.to_json)
-      expect { indirector.find(request) }.to raise_error(Puppet::Error, 'Find /puppet/v4/catalog '\
-                                                                        'resulted in 404 with the message: "404"')
+      allow(request).to receive(:options).and_return(request_options)
+
+      # need a Net::HTTP response
+      uri = URI.parse('https://www.example.com')
+      stub_request(:post, 'https://www.example.com')
+        .to_return(status: 404, headers: { "Content-Type" => 'application/json' })
+      net_http_response = Net::HTTP.post(uri, {})
+      puppet_http_response = Puppet::HTTP::Response.new(net_http_response, uri)
+
+      allow(compiler).to receive(:post_catalog4).and_raise(Puppet::HTTP::ResponseError.new(puppet_http_response))
+
+      expect { indirector.find(request) }.to raise_error(Puppet::Error, /resulted in 404 with the message/)
+
+      expect(compiler).to have_received(:post_catalog4)
     end
   end
 end
