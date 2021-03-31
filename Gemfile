@@ -18,5 +18,6 @@ group :development do
   gem 'rubocop-rspec'
 end
 
+gem 'puppet', path: '/home/cas/working_dir/puppet'
 # Specify your gem's dependencies in agentless-catalog-executor.gemspec
 gemspec
