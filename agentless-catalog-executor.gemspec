@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rack", ">= 2.0.5"
   spec.add_dependency "rails-auth", ">= 2.1.4"
   spec.add_dependency "sinatra", ">= 2.0.4"
+  spec.add_dependency "puppet", "~> 6.18"
 
   spec.add_development_dependency "bundler", ">= 1.16", "< 3.0.0"
   spec.add_development_dependency "faraday"
