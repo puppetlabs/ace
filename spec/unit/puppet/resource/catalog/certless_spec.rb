@@ -90,7 +90,7 @@ RSpec.describe Puppet::Resource::Catalog::Certless do
       allow(environment).to receive(:name).and_return('environment')
       # TODO: Instead of investing in properly mocking this out, instead short circuit here
       # and wait for the refactor of the inderector #find method to use a new method in puppet
-      allow(request).to receive(:do_request) do |_, &block|
+      allow(request).to receive(:do_request) do |_|
         puppet_server_response
       end
       allow(puppet_server_response).to receive(:[]).with('X-Puppet-Version').and_return('6.4.0')
