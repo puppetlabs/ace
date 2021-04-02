@@ -21,7 +21,8 @@ RSpec.describe ACE::Config do
     ['host', 'port', 'ssl-cert', 'ssl-key', 'ssl-ca-cert',
      'ssl-cipher-suites', 'loglevel', 'logfile', 'allowlist', 'projects-dir',
      'concurrency', 'cache-dir', 'puppet-server-conn-timeout',
-     'puppet-server-uri', 'ssl-ca-crls'].freeze
+     'puppet-server-uri', 'ssl-ca-crls', 'environments-codedir',
+     'environmentpath', 'basemodulepath'].freeze
   }
 
   let(:complete_env_keys) {
@@ -65,7 +66,7 @@ RSpec.describe ACE::Config do
   # These tests provide us with insight should the values from the Bolt controlled
   # base class change.
   it 'config_keys contains the expected base keys' do
-    expect(described_class.new.config_keys).to eq(complete_config_keys)
+    expect(described_class.new.config_keys.sort).to eq(complete_config_keys.sort)
   end
 
   it 'returns env_keys as an array' do

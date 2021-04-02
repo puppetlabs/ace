@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "hocon", ">= 1.2.5"
   spec.add_dependency "json-schema", ">= 2.8.0"
   spec.add_dependency "puma", ">= 3.12.0"
+  spec.add_dependency "puppet", "~> 6.18"
   spec.add_dependency "rack", ">= 2.0.5"
   spec.add_dependency "rails-auth", ">= 2.1.4"
   spec.add_dependency "sinatra", ">= 2.0.4"
