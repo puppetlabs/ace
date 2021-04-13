@@ -86,10 +86,6 @@ RSpec.describe ACE::PluginCache do
                                            URI.parse('https://localhost:9999'))
       FileUtils.mkdir_p('/tmp/environment_cache/production')
       ACE::PuppetUtil.isolated_puppet_settings('foo', 'production', false, '/tmp/environment_cache/production')
-      pool = Puppet::Network::HTTP::NoCachePool.new
-      Puppet.push_context({
-                            http_pool: pool
-                          }, "Isolated HTTP Pool")
     end
     # This example is a ugly tradeoff between more confidence in calling the
     # Puppet::Configurer::PluginHandler.new.download_plugins methods and having
