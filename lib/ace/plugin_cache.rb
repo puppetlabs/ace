@@ -49,17 +49,12 @@ module ACE
     end
 
     def with_synced_libdir_core(environment)
-      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
-      Puppet.push_context({
-                            http_pool: pool
-                          }, "Isolated HTTP Pool")
       libdir = sync_core(environment)
       Puppet.settings[:libdir] = libdir
       $LOAD_PATH << libdir
       yield
     ensure
       FileUtils.remove_dir(libdir)
-      pool.close
     end
 
     # the Puppet[:libdir] will point to a tmp location
