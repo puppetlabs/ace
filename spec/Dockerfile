@@ -1,7 +1,7 @@
 # used for the puppetserver in order
 # for some modules to be installed and
 # to relevant environments for testing
-FROM puppet/puppetserver:edge
+FROM puppet/puppetserver:6.14.1
 
 COPY ./fixtures/conf/auth.conf /etc/puppetlabs/puppetserver/conf.d/
 COPY ./fixtures/conf/enc.sh /usr/local/bin/enc.sh
