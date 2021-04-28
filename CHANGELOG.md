@@ -2,6 +2,19 @@
 
 All significant changes to this repo will be summarized in this file.
 
+## [v1.2.4](https://github.com/puppetlabs/ace/tree/v1.2.4) (2021-04-28)
+
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v1.2.3...v1.2.4)
+
+- regenerate test certs and add scripts to aid in regeneration
+
+## [v1.2.3](https://github.com/puppetlabs/ace/tree/v1.2.3) (2021-04-27)
+
+[Full Changelog](https://github.com/puppetlabs/ace/compare/v1.2.2...v1.2.3)
+
+- \(PE-31688\) use internal puppet client's http pool for pluginsync
+
+
 ## [v1.2.2](https://github.com/puppetlabs/ace/tree/v1.2.2) (2021-02-12)
 
 [Full Changelog](https://github.com/puppetlabs/ace/compare/v1.2.1...v1.2.2)
