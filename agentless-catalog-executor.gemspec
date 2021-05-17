@@ -21,8 +21,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.required_ruby_version = "~> 2.5"
-  # Pin concurrent-ruby to 1.1.5 until https://github.com/ruby-concurrency/concurrent-ruby/pull/856 is released
-  spec.add_dependency "concurrent-ruby", "1.1.5"
 
   spec.add_dependency "bolt",  ">= 2.9"
 
