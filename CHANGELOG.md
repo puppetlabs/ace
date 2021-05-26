@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- \(PE-31689\) remove unnecessary fork in run_task endpoint
+
 All significant changes to this repo will be summarized in this file.
 
 ## [v1.2.4](https://github.com/puppetlabs/ace/tree/v1.2.4) (2021-04-28)

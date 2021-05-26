@@ -251,11 +251,9 @@ module ACE
 
         parameters = body['parameters'] || {}
 
-        result = ForkUtil.isolate do
-          # Since this will only be on one node we can just return the first result
-          results = @executor.run_task(target, task, parameters)
-          scrub_stack_trace(results.first.to_data)
-        end
+        # Since this will only be on one node we can just return the first result
+        results = @executor.run_task(target, task, parameters)
+        result = scrub_stack_trace(results.first.to_data)
         [200, result.to_json]
       rescue Exception => e # rubocop:disable Lint/RescueException
         # handle all the things and make it obvious what happened
