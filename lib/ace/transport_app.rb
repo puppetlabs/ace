@@ -253,7 +253,13 @@ module ACE
 
         # Since this will only be on one node we can just return the first result
         results = @executor.run_task(target, task, parameters)
-        result = scrub_stack_trace(results.first.to_data)
+        result = results.first
+        # Unwrap _sensitive output (orchestrator will handle obfuscating it from the result)
+        if result.value.is_a?(Hash) && result.value.key?('_sensitive')
+          result.value['_sensitive'] = result.value['_sensitive'].unwrap
+        end
+        result = scrub_stack_trace(result.to_data)
+
         [200, result.to_json]
       rescue Exception => e # rubocop:disable Lint/RescueException
         # handle all the things and make it obvious what happened

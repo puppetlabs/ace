@@ -25,18 +25,13 @@ RSpec.describe ACE::TransportApp do
   let(:file_cache) { instance_double(BoltServer::FileCache, 'file_cache') }
   let(:task_response) { instance_double(Bolt::ResultSet, 'task_response') }
   let(:plugins) { instance_double(ACE::PluginCache, 'plugin_cache') }
-  let(:response) { instance_double(Bolt::Result, 'response') }
+  let(:response) {
+    obj = { "output" => "Hello!" }
+    target = Bolt::Target.new('foo')
+    Bolt::Result.for_task(target, obj.to_json, '', 0, 'atask', ['/do/not/print', 8])
+  }
   let(:configurer) { instance_double(ACE::Configurer, 'configurer') }
 
-  let(:status) do
-    {
-      node: "fw.example.net",
-      status: "success",
-      value: {
-        "output" => "Hello!"
-      }
-    }
-  end
   let(:body) do
     {
       'task': echo_task,
@@ -123,8 +118,6 @@ RSpec.describe ACE::TransportApp do
   ################
   describe '/run_task' do
     before do
-      allow(ACE::ForkUtil).to receive(:isolate).and_yield
-
       allow(executor).to receive(:run_task).with(
         match_array(instance_of(Bolt::Target)),
         kind_of(Bolt::Task),
@@ -132,7 +125,6 @@ RSpec.describe ACE::TransportApp do
       ).and_return(task_response)
 
       allow(task_response).to receive(:first).and_return(response)
-      allow(response).to receive(:to_data).and_return(status)
     end
 
     it 'throws an ace/schema_error if the request is invalid' do
@@ -185,7 +177,6 @@ RSpec.describe ACE::TransportApp do
     context 'when the task executes cleanly' do
       it 'returns the output' do
         post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
-
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response).to be_ok
         expect(last_response.status).to eq(200)
@@ -242,6 +233,29 @@ RSpec.describe ACE::TransportApp do
           }
         }
       end
+      let(:response) {
+        obj = {
+          '_error' => {
+            'msg' => 'Failed to open TCP connection to fw.example.net',
+            'kind' => 'module/unknown',
+            'details' => {
+              'class' => 'SocketError',
+              'backtrace' => [
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:906:in `rescue in block in connect'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:903:in `block in connect'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/timeout.rb:93:in `block in timeout'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/timeout.rb:103:in `timeout'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:902:in `connect'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:887:in `do_start'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:882:in `start'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:608:in `start'"
+              ]
+            }
+          }
+        }
+        target = Bolt::Target.new('foo')
+        Bolt::Result.for_task(target, obj.to_json, '', 0, 'atask', ['/do/not/print', 8])
+      }
 
       it 'runs returns the output and removes the error' do
         post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
@@ -256,31 +270,29 @@ RSpec.describe ACE::TransportApp do
     end
 
     context 'when the task executed returns a `stack_trace`' do
-      let(:status) do
-        {
-          node: "fw.example.net",
-          status: "failure",
-          value: {
-            '_error' => {
-              'msg' => 'Failed to open TCP connection to fw.example.net',
-              'kind' => 'module/unknown',
-              'details' => {
-                'class' => 'SocketError',
-                'stack_trace' => [
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:906:in `rescue in block in connect'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:903:in `block in connect'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/timeout.rb:93:in `block in timeout'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/timeout.rb:103:in `timeout'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:902:in `connect'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:887:in `do_start'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:882:in `start'",
-                  "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:608:in `start'"
-                ]
-              }
+      let(:response) {
+        obj = {
+          '_error' => {
+            'msg' => 'Failed to open TCP connection to fw.example.net',
+            'kind' => 'module/unknown',
+            'details' => {
+              'class' => 'SocketError',
+              'stack_trace' => [
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:906:in `rescue in block in connect'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:903:in `block in connect'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/timeout.rb:93:in `block in timeout'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/timeout.rb:103:in `timeout'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:902:in `connect'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:887:in `do_start'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:882:in `start'",
+                "/Users/foo/.rbenv/versions/2.4.1/lib/ruby/2.4.0/net/http.rb:608:in `start'"
+              ]
             }
           }
         }
-      end
+        target = Bolt::Target.new('foo')
+        Bolt::Result.for_task(target, obj.to_json, '', 0, 'atask', ['/do/not/print', 8])
+      }
 
       it 'runs returns the output and removes the error' do
         post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
@@ -291,6 +303,25 @@ RSpec.describe ACE::TransportApp do
         result = JSON.parse(last_response.body)
         expect(result).to include('status' => 'failure')
         expect(result['value']['_error']).not_to have_key('stack_trace')
+      end
+    end
+
+    context 'with tasks that have sensitive results' do
+      let(:response) {
+        obj = { "key" => "val", "_sensitive" => "hi" }
+        target = Bolt::Target.new('foo')
+        Bolt::Result.for_task(target, obj.to_json, '', 0, 'atask', ['/do/not/print', 8])
+      }
+
+      it 'returns the _sensitive output' do
+        post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
+        expect(last_response.errors).to match(/\A\Z/)
+        expect(last_response).to be_ok
+        expect(last_response.status).to eq(200)
+        result = JSON.parse(last_response.body)
+        expect(result).to include('status' => 'success')
+        expect(result['value']['key']).to eq('val')
+        expect(result['value']['_sensitive']).to eq('hi')
       end
     end
   end
