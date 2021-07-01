@@ -18,6 +18,5 @@ group :development do
   gem 'rubocop-rspec'
 end
 
-gem 'puppet', git: 'https://github.com/puppetlabs/puppet.git', branch: '6.x'
 # Specify your gem's dependencies in agentless-catalog-executor.gemspec
 gemspec
