@@ -250,6 +250,15 @@ module ACE
         task = Bolt::Task::PuppetServer.new(task_data['name'], task_data['metadata'], task_data['files'], @file_cache)
 
         parameters = body['parameters'] || {}
+        # Wrap parameters marked with '"sensitive": true' in the task metadata with a
+        # Sensitive wrapper type. This way it's not shown in logs.
+        if (param_spec = task.parameters)
+          parameters.each do |k, v|
+            if param_spec[k] && param_spec[k]['sensitive']
+              parameters[k] = Puppet::Pops::Types::PSensitiveType::Sensitive.new(v)
+            end
+          end
+        end
 
         # Since this will only be on one node we can just return the first result
         results = @executor.run_task(target, task, parameters)
