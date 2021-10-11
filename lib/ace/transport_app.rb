@@ -221,6 +221,12 @@ module ACE
         validate_schema(@schemas["run_task"], body)
 
         inventory = Bolt::Inventory.empty
+        local_data = { 'name' => 'localhost',
+                       'config' => { 'transport' => 'local',
+                                     'local' => { 'interpreters' => {
+                                       'rb' => ['/opt/puppetlabs/puppet/bin/ruby', '-r', 'bolt']
+                                     } } } }
+        Bolt::Target.from_hash(local_data, inventory)
         target_data = {
           'name' => body['target']['host'] || body['target']['name'] || 'remote',
           'config' => {
@@ -250,9 +256,8 @@ module ACE
         task = Bolt::Task::PuppetServer.new(task_data['name'], task_data['metadata'], task_data['files'], @file_cache)
 
         parameters = body['parameters'] || {}
-
-        # Since this will only be on one node we can just return the first result
         results = @executor.run_task(target, task, parameters)
+        # Since this will only be on one node we can just return the first result
         result = results.first
         # Unwrap _sensitive output (orchestrator will handle obfuscating it from the result)
         if result.value.is_a?(Hash) && result.value.key?('_sensitive')
