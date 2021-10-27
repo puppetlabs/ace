@@ -8,6 +8,7 @@ services:
 # Workaround for https://tickets.puppetlabs.com/browse/FM-8106
 install: bundle install --path=.bundle
 before_install:
+  - echo $DOCKER_PW | docker login --username $DOCKER_USER --password-stdin
   - docker network create spec_default
   - docker-compose -f ./spec/docker-compose.yml up -d --build
   - docker ps -a
