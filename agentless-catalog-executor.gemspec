@@ -22,13 +22,13 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = "~> 2.5"
 
-  spec.add_dependency "bolt",  ">= 2.9"
+  spec.add_dependency "bolt",  ">= 3.20"
 
   # server-side dependencies cargo culted from https://github.com/puppetlabs/bolt/blob/4418da408643aa7eb5ed64f4c9704b941ea878dc/Gemfile#L10-L16
   spec.add_dependency "hocon", ">= 1.2.5"
   spec.add_dependency "json-schema", ">= 2.8.0"
   spec.add_dependency "puma", ">= 3.12.0"
-  spec.add_dependency "puppet", "~> 6.23"
+  spec.add_dependency "puppet", ">= 6.23.0", "< 8.0.0"
   spec.add_dependency "rack", ">= 2.0.5"
   spec.add_dependency "rails-auth", ">= 2.1.4"
   spec.add_dependency "sinatra", ">= 2.0.4"

@@ -106,8 +106,8 @@ RSpec.describe Puppet::Resource::Catalog::Certless do
       uri = URI.parse('https://www.example.com')
       stub_request(:post, 'https://www.example.com')
         .to_return(status: 404, headers: { "Content-Type" => 'application/json' })
-      net_http_response = Net::HTTP.post(uri, {})
-      puppet_http_response = Puppet::HTTP::Response.new(net_http_response, uri)
+      net_http_response = Net::HTTP.post(uri, '')
+      puppet_http_response = Puppet::HTTP::ResponseNetHTTP.new(uri, net_http_response)
 
       allow(compiler).to receive(:post_catalog4).and_raise(Puppet::HTTP::ResponseError.new(puppet_http_response))
 
