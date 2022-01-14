@@ -13,6 +13,9 @@ end
 
 group :development do
   # gem 'bolt', git: 'https://github.com/puppetlabs/bolt', branch: 'master'
+  # activesupport 7 bumped the minimum Ruby version to 2.7. We can remove this
+  # once we're on that version.
+  gem "activesupport", "~> 6.0"
   gem 'github_changelog_generator', '~> 1.14'
   gem 'pry-byebug'
   gem 'rubocop-rspec'
