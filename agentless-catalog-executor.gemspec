@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.required_ruby_version = "~> 2.5"
+  spec.required_ruby_version = ">= 2.5"
 
   spec.add_dependency "bolt",  ">= 3.20"
 
@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "hocon", ">= 1.2.5"
   spec.add_dependency "json-schema", ">= 2.8.0"
   spec.add_dependency "puma", ">= 3.12.0"
-  spec.add_dependency "puppet", ">= 6.23.0", "< 8.0.0"
+  spec.add_dependency "puppet", ">= 6.23.0", "< 9.0.0"
   spec.add_dependency "rack", ">= 2.0.5"
   spec.add_dependency "rails-auth", ">= 2.1.4"
   spec.add_dependency "sinatra", ">= 2.0.4"
