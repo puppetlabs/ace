@@ -121,7 +121,7 @@ RSpec.describe ACE::TransportApp do
       allow(executor).to receive(:run_task).with(
         match_array(instance_of(Bolt::Target)),
         kind_of(Bolt::Task),
-        "message" => "Hello!"
+       { "message" => "Hello!"}
       ).and_return(task_response)
 
       allow(task_response).to receive(:first).and_return(response)

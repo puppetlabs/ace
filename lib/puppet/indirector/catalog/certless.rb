@@ -25,7 +25,7 @@ module Puppet
           }
           session = Puppet.lookup(:http_session)
           api = session.route_to(:puppet)
-          _, catalog, = api.post_catalog4(certname, payload)
+          _, catalog, = api.post_catalog4(certname, **payload)
           catalog
         rescue Puppet::HTTP::ResponseError => e
           if e.response.code == 404
