@@ -1,0 +1,33 @@
+name: ACE PR tests
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  ace_pr_tests:
+    name: Ace PR tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby: [2.7, 3.2]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: Update gems
+        run: bundle update
+      - name: Setup tests
+        shell: bash
+        run: |
+          docker-compose -f spec/docker-compose.yml build --parallel
+          docker-compose -f spec/docker-compose.yml up -d
+          docker ps -a
+          i="0"; while true; do echo Checking...; echo $(docker logs spec_puppet_1 --tail 10) | grep -q 'Puppet Server has successfully started' && break; if [ $i -gt 90 ]; then exit 1; fi; sleep 1; i=$[$i+1]; done;
+          docker exec spec_puppet_1 puppetserver ca generate --certname aceserver --subject-alt-names 'puppet,localhost,aceserver,ace_aceserver_1,spec_puppetserver_1,ace_server,puppet_server,spec_aceserver_1,puppetdb,spec_puppetdb_1,0.0.0.0'
+      - name: Run tests
+        run: bundle exec rake
