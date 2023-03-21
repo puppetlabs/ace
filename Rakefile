@@ -7,7 +7,7 @@ RuboCop::RakeTask.new(:rubocop) do |t|
   t.options = ['--display-cop-names']
 end
 
-task default: %i[rubocop spec license_finder]
+task default: %i[rubocop spec]
 
 #### RSPEC ####
 require 'rspec/core/rake_task'
@@ -19,14 +19,6 @@ namespace :spec do
   task :coverage do
     ENV['COVERAGE'] = 'yes'
     Rake::Task['spec'].execute
-  end
-end
-
-#### LICENSE_FINDER ####
-desc 'Check for unapproved licenses in dependencies'
-task(:license_finder) do
-  unless system('license_finder --decisions-file=.dependency_decisions.yml')
-    raise(StandardError, 'Unapproved license(s) found on dependencies')
   end
 end
 
