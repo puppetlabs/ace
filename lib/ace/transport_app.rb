@@ -176,7 +176,7 @@ module ACE
       if execution_thread.join(timeout).nil?
         execution_thread.kill
         raise ACE::Error.new("Execution on #{target_name} timed " \
-                             "out after #{body['timeout']} seconds",
+                             "out after #{timeout} seconds",
                              'puppetlabs/ace/timeout_exception')
       else
         execution_thread.value

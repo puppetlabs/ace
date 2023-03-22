@@ -176,7 +176,7 @@ RSpec.describe ACE::TransportApp do
           result = JSON.parse(last_response.body)
           expect(result['status']).to eq('failure')
           error_message = result.dig('value', '_error', 'msg')
-          expect(error_message).to eq('Task execution on remote timed out after 2 seconds')
+          expect(error_message).to eq('Execution on remote timed out after 2 seconds')
         end
       end
     end
