@@ -10,7 +10,7 @@ module ACE
     # Forks and calls a function
     # It is expected that the function returns a JSON response
     # Throws an exception if JSON.generate fails to generate
-    def self.isolate
+    def self.isolate(timeout = nil)
       reader, writer = IO.pipe
       pid = fork {
         # :nocov:
@@ -50,7 +50,20 @@ module ACE
       end
       writer.close
       output = reader.readlines('')[0]
-      Process.wait(pid)
+      if timeout && timeout > 0
+        begin
+          Timeout.timeout(timeout) do
+            Process.wait(pid)
+          end
+        rescue Timeout::Error
+          Process.kill(9, pid)
+          # collect status so it doesn't stick around as zombie process
+          Process.wait(pid)
+          raise ACE::Error.new("Operation timed out after #{timeout} seconds", 'puppetlabs/ace/fork_util', 'no details')
+        end
+      else
+        Process.wait(pid)
+      end
       if $CHILD_STATUS != 0
         error = JSON.parse(output)
         raise ACE::Error.new(error['msg'], error['kind'], error['details'])

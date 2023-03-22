@@ -362,7 +362,7 @@ module ACE
       end
 
       begin
-        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname) do
+        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname, body['timeout']) do
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
 
           # Apply compiler flags for Configurer
@@ -380,14 +380,22 @@ module ACE
                       network_device: true,
                       pluginsync: false,
                       trusted_facts: ACE::TransportApp.trusted_facts(certname) }
-          if body['timeout'] && body['timeout'] > 0
-            execute_with_timeout(body['timeout'], certname) { run_puppet(configurer, trans_id, job_id, options) }
-          else
-            run_puppet(configurer, trans_id, job_id, options)
-          end
-        ensure
+          configurer.run(options)
           # return logging level back to original
           Puppet.settings[:log_level] = current_log_level if body['compiler']['debug']
+          # `options[:report]` gets populated by configurer.run with the report of the run with a
+          # Puppet::Transaction::Report instance
+          # see https://github.com/puppetlabs/puppet/blob/c956ad95fcdd9aabb28e196b55d1f112b5944777/lib/puppet/configurer.rb#L211
+          report = options[:report]
+          # remember that this hash gets munged by fork's json serialising
+          {
+            'time' => report.time,
+            'transaction_uuid' => trans_id,
+            'environment' => report.environment,
+            'status' => report.status,
+            'metrics' => nest_metrics(report.metrics),
+            'job_id' => job_id
+          }
         end
       rescue ACE::Error => e
         process_error = {
