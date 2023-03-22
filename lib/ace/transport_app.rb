@@ -168,6 +168,40 @@ module ACE
       end]
     end
 
+    # Execute a block in a thread. If the specified timeout is hit, send a kill
+    # to the thread and raise an error. If the thread completes before the timeout
+    # return the value
+    def execute_with_timeout(timeout)
+      execution_thread = Thread.new { yield }
+      if execution_thread.join(timeout).nil?
+        execution_thread.kill
+        raise ACE::Error.new("Execution on #{target.first.safe_name} timed " \
+                             "out after #{body['timeout']} seconds",
+                             'puppetlabs/ace/timeout_exception')
+      else
+        execution_thread.value
+      end
+    end
+
+    # Rely on configurer to modify the options hash passed in. This must happen in the same
+    # thread work is done on in execute_with_timeout.
+    def run_puppet(configurer, trans_id, job_id, options)
+      configurer.run(options)
+      # `options[:report]` gets populated by configurer.run with the report of the run with a
+      # Puppet::Transaction::Report instance
+      # see https://github.com/puppetlabs/puppet/blob/c956ad95fcdd9aabb28e196b55d1f112b5944777/lib/puppet/configurer.rb#L211
+      report = options[:report]
+      # remember that this hash gets munged by fork's json serialising
+      {
+        'time' => report.time,
+        'transaction_uuid' => trans_id,
+        'environment' => report.environment,
+        'status' => report.status,
+        'metrics' => nest_metrics(report.metrics),
+        'job_id' => job_id
+      }
+    end
+
     # returns a hash of trusted facts that will be used
     # to request a catalog for the target
     def self.trusted_facts(certname)
@@ -257,15 +291,7 @@ module ACE
 
         parameters = body['parameters'] || {}
         results = if body['timeout'] && body['timeout'] > 0
-                    task_thread = Thread.new { @executor.run_task(target, task, parameters) }
-                    if task_thread.join(body['timeout']).nil?
-                      task_thread.kill
-                      raise ACE::Error.new("Task execution on #{target.first.safe_name} timed " \
-                                           "out after #{body['timeout']} seconds",
-                                           'puppetlabs/ace/timeout_exception')
-                    else
-                      task_thread.value
-                    end
+                    execute_with_timeout(body['timeout']) { @executor.run_task(target, task, parameters) }
                   else
                     @executor.run_task(target, task, parameters)
                   end
@@ -352,22 +378,14 @@ module ACE
                       network_device: true,
                       pluginsync: false,
                       trusted_facts: ACE::TransportApp.trusted_facts(certname) }
-          configurer.run(options)
+          if body['timeout'] && body['timeout'] > 0
+            execute_with_timeout(body['timeout']) { run_puppet(configurer, trans_id, job_id, options) }
+          else
+            run_puppet(configurer, trans_id, job_id, options)
+          end
+        ensure
           # return logging level back to original
           Puppet.settings[:log_level] = current_log_level if body['compiler']['debug']
-          # `options[:report]` gets populated by configurer.run with the report of the run with a
-          # Puppet::Transaction::Report instance
-          # see https://github.com/puppetlabs/puppet/blob/c956ad95fcdd9aabb28e196b55d1f112b5944777/lib/puppet/configurer.rb#L211
-          report = options[:report]
-          # remember that this hash gets munged by fork's json serialising
-          {
-            'time' => report.time,
-            'transaction_uuid' => trans_id,
-            'environment' => report.environment,
-            'status' => report.status,
-            'metrics' => nest_metrics(report.metrics),
-            'job_id' => job_id
-          }
         end
       rescue ACE::Error => e
         process_error = {
