@@ -59,6 +59,7 @@ RSpec.describe ACE::TransportApp do
         "target": {
           "remote-transport": "spinner"
         },
+        "timeout": 20,
         "compiler": {
           "certname": "localhost",
           "environment": environment,
