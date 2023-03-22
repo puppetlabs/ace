@@ -171,11 +171,11 @@ module ACE
     # Execute a block in a thread. If the specified timeout is hit, send a kill
     # to the thread and raise an error. If the thread completes before the timeout
     # return the value
-    def execute_with_timeout(timeout)
+    def execute_with_timeout(timeout, target_name)
       execution_thread = Thread.new { yield }
       if execution_thread.join(timeout).nil?
         execution_thread.kill
-        raise ACE::Error.new("Execution on #{target.first.safe_name} timed " \
+        raise ACE::Error.new("Execution on #{target_name} timed " \
                              "out after #{body['timeout']} seconds",
                              'puppetlabs/ace/timeout_exception')
       else
@@ -291,7 +291,9 @@ module ACE
 
         parameters = body['parameters'] || {}
         results = if body['timeout'] && body['timeout'] > 0
-                    execute_with_timeout(body['timeout']) { @executor.run_task(target, task, parameters) }
+                    execute_with_timeout(body['timeout'], target.first.safe_name) do
+                      @executor.run_task(target, task, parameters)
+                    end
                   else
                     @executor.run_task(target, task, parameters)
                   end
@@ -379,7 +381,7 @@ module ACE
                       pluginsync: false,
                       trusted_facts: ACE::TransportApp.trusted_facts(certname) }
           if body['timeout'] && body['timeout'] > 0
-            execute_with_timeout(body['timeout']) { run_puppet(configurer, trans_id, job_id, options) }
+            execute_with_timeout(body['timeout'], certname) { run_puppet(configurer, trans_id, job_id, options) }
           else
             run_puppet(configurer, trans_id, job_id, options)
           end
