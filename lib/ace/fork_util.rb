@@ -48,11 +48,12 @@ module ACE
         warn "Could not fork"
         exit 1
       end
-      writer.close
-      output = reader.readlines('')[0]
+      output = nil
       if timeout && timeout > 0
         begin
           Timeout.timeout(timeout) do
+            writer.close
+            output = reader.readlines('')[0]
             Process.wait(pid)
           end
         rescue Timeout::Error
@@ -62,6 +63,8 @@ module ACE
           raise ACE::Error.new("Operation timed out after #{timeout} seconds", 'puppetlabs/ace/fork_util', 'no details')
         end
       else
+        writer.close
+        output = reader.readlines('')[0]
         Process.wait(pid)
       end
       if $CHILD_STATUS != 0
