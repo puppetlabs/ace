@@ -36,8 +36,8 @@ module ACE
       self
     end
 
-    def with_synced_libdir(environment, enforce_environment, certname, &block)
-      ForkUtil.isolate do
+    def with_synced_libdir(environment, enforce_environment, certname, timeout, &block)
+      ForkUtil.isolate(timeout) do
         ACE::PuppetUtil.isolated_puppet_settings(
           certname,
           environment,

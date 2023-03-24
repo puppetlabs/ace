@@ -256,7 +256,21 @@ module ACE
         task = Bolt::Task::PuppetServer.new(task_data['name'], task_data['metadata'], task_data['files'], @file_cache)
 
         parameters = body['parameters'] || {}
-        results = @executor.run_task(target, task, parameters)
+        ## When a positive timeout is specified execute the task in a thread, wait for timeout seconds and
+        ## if the task is not done by the specified timeout attempt to kill the thread and move on
+        results = if body['timeout'] && body['timeout'] > 0
+                    task_thread = Thread.new { @executor.run_task(target, task, parameters) }
+                    if task_thread.join(body['timeout']).nil?
+                      task_thread.kill
+                      raise ACE::Error.new("Task execution on #{target.first.safe_name} timed " \
+                                           "out after #{body['timeout']} seconds",
+                                           'puppetlabs/ace/timeout_exception')
+                    else
+                      task_thread.value
+                    end
+                  else
+                    @executor.run_task(target, task, parameters)
+                  end
         # Since this will only be on one node we can just return the first result
         result = results.first
         # Unwrap _sensitive output (orchestrator will handle obfuscating it from the result)
@@ -322,7 +336,7 @@ module ACE
       end
 
       begin
-        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname) do
+        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname, body['timeout']) do
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
 
           # Apply compiler flags for Configurer
