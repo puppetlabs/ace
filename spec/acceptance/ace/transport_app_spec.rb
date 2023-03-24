@@ -168,6 +168,17 @@ RSpec.describe ACE::TransportApp do
           expect(result['status']).to eq('success')
         end
       end
+
+      describe 'timeout' do
+        it 'times out when the supplied timeout is hit' do
+          body = run_task_body.merge({ 'timeout' => 2, 'parameters': { 'cpu_time' => 5, 'wait_time' => 5 } })
+          post '/run_task', JSON.generate(body), 'CONTENT_TYPE' => 'text/json'
+          result = JSON.parse(last_response.body)
+          expect(result['status']).to eq('failure')
+          error_message = result.dig('value', '_error', 'msg')
+          expect(error_message).to eq('Task execution on remote timed out after 2 seconds')
+        end
+      end
     end
   end
 end
