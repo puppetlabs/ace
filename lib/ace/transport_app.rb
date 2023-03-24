@@ -336,7 +336,7 @@ module ACE
       end
 
       begin
-        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname) do
+        run_result = @plugins.with_synced_libdir(environment, enforce_environment, certname, body['timeout']) do
           ACE::TransportApp.init_puppet_target(certname, body['target']['remote-transport'], body['target'])
 
           # Apply compiler flags for Configurer

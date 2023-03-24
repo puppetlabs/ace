@@ -369,7 +369,7 @@ RSpec.describe ACE::TransportApp do
         expect(psettings).to receive(:[]=).with(:evaltrace, false)
 
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
-        expect { |b| plugins.with_synced_libdir('development', false, certname, &b) }.to yield_with_no_args
+        expect { |b| plugins.with_synced_libdir('development', false, certname, nil, &b) }.to yield_with_no_args
 
         expect(configurer).to have_received(:run)
         expect(last_response.errors).to match(/\A\Z/)
@@ -480,7 +480,7 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 400 with _error' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
-        expect { |b| plugins.with_synced_libdir('development', false, certname, &b) }.to yield_with_no_args
+        expect { |b| plugins.with_synced_libdir('development', false, certname, nil, &b) }.to yield_with_no_args
         expect(last_response.status).to eq(400)
         result = JSON.parse(last_response.body)
         expect(result['status']).to eq('failure')
@@ -512,7 +512,7 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 400 with _error' do
         post '/execute_catalog', bad_json, 'CONTENT_TYPE' => 'text/json'
-        expect { |b| plugins.with_synced_libdir('development', false, certname, &b) }.to yield_with_no_args
+        expect { |b| plugins.with_synced_libdir('development', false, certname, nil, &b) }.to yield_with_no_args
         expect(last_response.status).to eq(400)
         result = JSON.parse(last_response.body)
         expect(result['status']).to eq('failure')
@@ -532,7 +532,7 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 400 with _error' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
-        expect { |b| plugins.with_synced_libdir('development', false, certname, &b) }.to yield_with_no_args
+        expect { |b| plugins.with_synced_libdir('development', false, certname, nil, &b) }.to yield_with_no_args
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response.status).to eq(400)
         result = JSON.parse(last_response.body)
@@ -551,7 +551,7 @@ RSpec.describe ACE::TransportApp do
 
       it 'returns 500 with _error' do
         post '/execute_catalog', JSON.generate(execute_catalog_body), 'CONTENT_TYPE' => 'text/json'
-        expect { |b| plugins.with_synced_libdir('development', false, certname, &b) }.to yield_with_no_args
+        expect { |b| plugins.with_synced_libdir('development', false, certname, nil, &b) }.to yield_with_no_args
         expect(last_response.errors).to match(/\A\Z/)
         expect(last_response.status).to eq(500)
         result = JSON.parse(last_response.body)

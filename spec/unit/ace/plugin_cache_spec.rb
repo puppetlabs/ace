@@ -67,7 +67,7 @@ RSpec.describe ACE::PluginCache do
       it 'isolates the call and yields' do
         allow(plugin_cache).to receive(:with_synced_libdir_core).and_yield
 
-        expect { |b| plugin_cache.with_synced_libdir('environment', false, 'certname', &b) }.to yield_with_no_args
+        expect { |b| plugin_cache.with_synced_libdir('environment', false, 'certname', nil, &b) }.to yield_with_no_args
         expect(ACE::ForkUtil).to have_received(:isolate).ordered
         expect(plugin_cache).to have_received(:with_synced_libdir_core).with('environment').ordered
       end

@@ -16,6 +16,10 @@
       "additionalProperties": true,
       "required": ["remote-transport"]
     },
+    "timeout": {
+      "type": "integer",
+      "description": "Number of seconds to wait before abandoning the task execution on the tartet."
+    },
     "compiler": {
       "type": "object",
       "description": "Contains additional information to compile the catalog",
